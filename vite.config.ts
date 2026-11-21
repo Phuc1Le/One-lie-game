@@ -52,6 +52,9 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
+    // This module discovers our page files with import.meta.glob. Keep it
+    // outside the immutable dependency cache so added routes reach open tabs.
+    exclude: ['@generouted/react-router/lazy'],
     // generouted loads routes via `import.meta.glob`, which Vite's esbuild dep-scanner
     // does not evaluate — so every dep reachable only through the page tree (UI libs,
     // and deepspace via _app.tsx) is invisible to the cold scan, discovered late, and
