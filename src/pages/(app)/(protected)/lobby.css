@@ -1,0 +1,21 @@
+/* Local tokens keep the learning milestone's palette confined to the lobby. */
+.one-lie-lobby {
+  color-scheme: light;
+  --color-background: #f6f2e9;
+  --color-foreground: #302c26;
+  --color-card: #fffdf8;
+  --color-card-foreground: #302c26;
+  --color-muted-foreground: #736b60;
+  --color-border: #e4dccc;
+  --color-input: #cfc4b3;
+  --color-primary: #493e32;
+  --color-primary-foreground: #fffdf8;
+  --color-secondary: #eee7da;
+  --color-secondary-foreground: #493e32;
+  --color-accent: #eee7da;
+  --color-accent-foreground: #302c26;
+  --color-ring: #a75538;
+  --color-destructive: #a03527;
+  background: var(--color-background);
+  color: var(--color-foreground);
+}
