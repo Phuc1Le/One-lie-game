@@ -1,6 +1,7 @@
 import type { ActionContext, ActionHandler, ActionResult } from 'deepspace/worker'
 import type { Env } from '../../worker'
 import { LOBBY_SEATS, ROOM_CODE_PATTERN, type LobbySeat } from '../schemas/lobby-schema'
+import { roomCategory } from '../game/categories'
 
 type LobbyContext = ActionContext<Env>
 type SeatResult = ActionResult<{ code: string; seat: number }>
@@ -24,6 +25,7 @@ export const createRoom: ActionHandler<Env> = async (ctx): Promise<SeatResult> =
     // Do not pass a recordId: SDK create with an existing id is an upsert.
     const created = await ctx.tools.create<LobbySeat>(LOBBY_SEATS, {
       code, seat: 1, playerId: ctx.userId, displayName: name,
+      categoryId: roomCategory(code).id,
     })
     if (created.success) return { success: true, data: { code, seat: 1 } }
     if (!created.error.startsWith('Duplicate:')) {
@@ -72,22 +74,4 @@ function roomFull(): SeatResult {
   return { success: false, error: 'Room full. Both seats are already taken.', code: 'room_full' }
 }
 
-export const exitRoom: ActionHandler<Env> = async ({ userId, params, tools }) => {
-  const code = typeof params.code === 'string' ? params.code.trim().toUpperCase() : ''
-  if (!ROOM_CODE_PATTERN.test(code)) {
-    return { success: false, error: 'Enter a valid room code.', code: 'invalid_code' }
-  }
-  const room = await tools.query<LobbySeat>(LOBBY_SEATS, { where: { code }, limit: 2 })
-  if (!room.success) return { success: false, error: 'Could not load the room. Please try again.' }
-  if (!room.data.records.some((record) => record.data.playerId === userId)) {
-    return { success: false, error: 'You do not have a seat in this room.' }
-  }
-  const host = room.data.records.find((record) => record.data.seat === 1)
-  if (!host) return { success: false, error: 'Room not found.', code: 'room_not_found' }
-
-  // Either player closes the whole room with one live record update. Keep
-  // the closed marker so the old code cannot be joined or generated again.
-  const closed = await tools.update<LobbySeat>(LOBBY_SEATS, host.recordId, { status: 'closed' })
-  if (!closed.success) return { success: false, error: 'Could not exit the room. Please try again.' }
-  return { success: true, data: { code } }
-}
+export { exitRoom } from './selection'

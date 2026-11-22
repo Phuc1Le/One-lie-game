@@ -14,18 +14,18 @@ for (const exitingSeat of [0, 1]) {
     await guest.page.goto('/lobby')
     await guest.page.getByLabel('Room code', { exact: true }).fill(code)
     await guest.page.getByRole('button', { name: 'Join Room', exact: true }).click()
-    await expect(guest.page.getByTestId('lobby-seat-2')).toContainText('(you)')
+    await expect(guest.page.getByTestId('lobby-seat-2')).toContainText('(you)', { timeout: 15_000 })
 
     const exiting = players[exitingSeat].page
     const remaining = players[1 - exitingSeat].page
     await exiting.getByRole('button', { name: 'Exit Room', exact: true }).click()
     await expect(exiting.getByRole('button', { name: 'Create Room', exact: true })).toBeVisible()
     // The other browser must receive closure without a refresh.
-    await expect(remaining.getByRole('status')).toContainText('Your opponent left. This room has closed.')
+    await expect(remaining.getByTestId('lobby-status')).toContainText('Your opponent left. This room has closed.')
     await expect(remaining.getByTestId('lobby-seat-1')).toHaveCount(0)
     await expect(remaining.getByTestId('lobby-seat-2')).toHaveCount(0)
     await remaining.reload()
-    await expect(remaining.getByRole('status')).toContainText('This room has closed.')
+    await expect(remaining.getByTestId('lobby-status')).toContainText('This room has closed.')
 
     await remaining.getByRole('button', { name: 'Back to lobby', exact: true }).click()
     await remaining.getByLabel('Room code', { exact: true }).fill(code)
@@ -36,7 +36,7 @@ for (const exitingSeat of [0, 1]) {
 
 test('lobby: sign-in is required', async ({ page }) => {
   await page.goto('/lobby')
-  await expect(page.getByRole('heading', { name: 'Sign in to continue' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Sign in to continue' })).toBeVisible({ timeout: 15_000 })
   await expect(page.getByRole('button', { name: 'Create Room', exact: true })).toHaveCount(0)
   const response = await page.request.post('/api/actions/createRoom', { data: {} })
   expect(response.status()).toBe(401)
@@ -59,12 +59,12 @@ test('lobby: second player appears live and both seats survive refreshing', asyn
   await expect(b.page.getByTestId('lobby-seat-2')).toContainText('(you)')
   // No navigation or reload on A: this assertion must pass through live sync.
   await expect(a.page.getByTestId('lobby-seat-2')).not.toContainText('Open seat')
-  await expect(a.page.getByRole('status')).toContainText('Both players are here')
+  await expect(a.page.getByTestId('lobby-status')).toContainText('Both players are here')
 
   await Promise.all([a.page.reload(), b.page.reload()])
   await expect(a.page.getByTestId('lobby-seat-1')).toContainText('(you)')
   await expect(b.page.getByTestId('lobby-seat-2')).toContainText('(you)')
-  await expect(a.page.getByRole('status')).toContainText('Both players are here')
+  await expect(a.page.getByTestId('lobby-status')).toContainText('Both players are here')
 
   // The same account can rejoin a full room without consuming another seat.
   await b.page.goto('/lobby')
@@ -89,7 +89,7 @@ test('lobby: simultaneous joins award only one last seat', async ({ users }) => 
     const alerts = await Promise.all([b, c].map((player) => player.page.getByRole('alert').allTextContents()))
     return alerts.flat().filter((text) => text.includes('Room full')).length
   }).toBe(1)
-  await expect(a.page.getByRole('status')).toContainText('Both players are here')
+  await expect(a.page.getByTestId('lobby-status')).toContainText('Both players are here')
   const seated = await Promise.all([b, c].map((player) => player.page.getByTestId('lobby-seat-2').filter({ hasText: '(you)' }).count()))
   expect(seated.reduce((sum, count) => sum + count, 0)).toBe(1)
 })

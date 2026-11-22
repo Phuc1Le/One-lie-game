@@ -10,6 +10,10 @@ export type LobbySeat = {
   displayName: string
   // The creator's seat carries the room's lifecycle. Older seats are open.
   status?: 'open' | 'closed'
+  categoryId?: string
+  ready?: number
+  startedAt?: number
+  selectionEndsAt?: number
 }
 
 // Only the actions assign seats. Authenticated players may read lobby rosters;
@@ -25,6 +29,10 @@ export const lobbySeatsSchema: CollectionSchema = {
     { name: 'playerId', storage: 'text', interpretation: 'plain', required: true },
     { name: 'displayName', storage: 'text', interpretation: 'plain', required: true, maxLength: 60 },
     { name: 'status', storage: 'text', interpretation: 'plain', default: 'open' },
+    { name: 'categoryId', storage: 'text', interpretation: 'plain' },
+    { name: 'ready', storage: 'number', interpretation: 'plain', default: 0 },
+    { name: 'startedAt', storage: 'number', interpretation: 'plain' },
+    { name: 'selectionEndsAt', storage: 'number', interpretation: 'plain' },
   ],
   // Storage, rather than a UI check, prevents two callers claiming seat 2.
   uniqueOn: ['code', 'seat'],

@@ -12,6 +12,13 @@ This is a **DeepSpace** app — a real-time collaborative app built on the
 [`deepspace`](https://www.npmjs.com/package/deepspace) SDK and deployed to
 Cloudflare Workers via `npx deepspace deploy`.
 
+## One Lie gameplay reference
+
+Read [GAME_RULES.md](GAME_RULES.md) before planning or changing gameplay. It
+records the developer's target rules, current implementation differences, and
+details still to clarify. Treat it as a reference, not authorization to add
+unfinished features or change behavior without a request.
+
 ## Version control
 
 The app's **cloud repo** on the DeepSpace platform is the default version

@@ -13,7 +13,6 @@ import {
   CronRoom,
   JobRoom,
   PresenceRoom,
-  RecordRoom,
   resolveAppRole,
   workerErrorHandler,
   YjsRoom,
@@ -33,6 +32,7 @@ import {
   resolveAuth,
 } from './src/server/http-routes.js'
 import { registerRealtimeRoutes } from './src/server/realtime-routes.js'
+import { GameRecordRoom } from './src/server/game-record-room.js'
 
 // Dynamic deploy reads this manifest to create the app's DO bindings.
 export const __DO_MANIFEST__ = [
@@ -44,7 +44,7 @@ export const __DO_MANIFEST__ = [
   { binding: 'JOB_ROOMS', className: 'AppJobRoom', sqlite: true },
 ] as const satisfies DOManifest
 
-export class AppRecordRoom extends RecordRoom<Env> {
+export class AppRecordRoom extends GameRecordRoom {
   constructor(state: DurableObjectState, env: Env) {
     super(state, env, schemas, { ownerUserId: env.OWNER_USER_ID })
   }

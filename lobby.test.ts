@@ -2,7 +2,8 @@ import { DatabaseSync } from 'node:sqlite'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ActionContext, ActionTools } from 'deepspace/worker'
 import type { Env } from './worker'
-import { createRoom, joinRoom, exitRoom } from './src/actions/lobby'
+import { createRoom, joinRoom } from './src/actions/lobby'
+import { closeRoom } from './src/actions/close-room'
 import { lobbySeatsSchema, type LobbySeat } from './src/schemas/lobby-schema'
 
 // Use a real SQLite UNIQUE index rather than a mock that always accepts writes.
@@ -53,7 +54,7 @@ describe('lobby seat rules', () => {
     const s = store()
     const code = await create(s)
     await joinRoom(s.context('bob', { code }))
-    expect(await exitRoom(s.context(playerId, { code }))).toEqual({ success: true, data: { code } })
+    expect(await closeRoom(playerId, { code }, s.context(playerId).tools)).toEqual({ success: true, data: { code } })
     expect(s.db.prepare('SELECT status FROM seats WHERE code = ? AND seat = 1').get(code)).toEqual({ status: 'closed' })
     for (const id of ['alice', 'bob', 'charlie']) {
       expect(await joinRoom(s.context(id, { code }))).toMatchObject({ success: false, code: 'room_closed' })
@@ -64,7 +65,7 @@ describe('lobby seat rules', () => {
   it('closes a room when its creator exits before a friend joins', async () => {
     const s = store()
     const code = await create(s)
-    expect((await exitRoom(s.context('alice', { code }))).success).toBe(true)
+    expect((await closeRoom('alice', { code }, s.context('alice').tools)).success).toBe(true)
     expect(await joinRoom(s.context('bob', { code }))).toMatchObject({ success: false, code: 'room_closed' })
   })
 
