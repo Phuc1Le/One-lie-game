@@ -13,7 +13,7 @@ export type SelectionTools = Pick<ActionTools, 'query' | 'create' | 'update'>
 // The public action receives identity from the existing JWT-verifying route.
 // Forward to the RecordRoom so the entire save-and-ready operation is ordered
 // there, rather than racing across independent Worker requests.
-function forwardGameAction(path: string): ActionHandler<Env> {
+export function forwardGameAction(path: string): ActionHandler<Env> {
   return async ({ env, userId, params }) => {
     const room = env.RECORD_ROOMS.get(env.RECORD_ROOMS.idFromName(`app:${env.DEEPSPACE_APP_ID}`))
     const response = await room.fetch(new Request(`https://internal${path}`, {

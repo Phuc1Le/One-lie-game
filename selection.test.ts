@@ -5,12 +5,182 @@ import { LOBBY_SEATS } from './src/schemas/lobby-schema'
 import { WORD_SELECTIONS } from './src/schemas/word-selection-schema'
 import { SELECT_WORD_PATH, START_GAME_PATH, EXIT_ROOM_PATH, DUEL_TIMING_PATH } from './src/actions/selection'
 import { CATEGORY_REVEAL_MS, WORD_SELECTION_MS } from './src/game/timing'
+import { ANSWER_PATH, DECLARE_PATH, QUESTION_PATH, SYNC_QA_PATH, questionAction } from './src/actions/questions'
+import { PRIVATE_ANSWERS, QUESTION_TURNS } from './src/schemas/question-schema'
 
 // Exercise the actual SDK RecordRoom, SQLite, permission checks and WebSocket
 // frames in local workerd. No platform account or external service is needed.
 // miniflare/esbuild are already installed with this project's build tooling.
 let runtime: Miniflare
 const sockets: Array<{ close(): void }> = []
+
+async function qa(userId: string, path: string, code: string, turn: number, data = {}) {
+  const response = await runtime.dispatchFetch(`http://test${path}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-App-Action': 'true', 'X-User-Id': userId },
+    body: JSON.stringify({ code, turn, ...data }),
+  })
+  return response.json() as Promise<any>
+}
+
+async function readyQA(code: string) {
+  await seed(code)
+  expect((await select('alice', code, 'football')).success).toBe(true)
+  expect((await select('bob', code, 'tennis')).success).toBe(true)
+}
+
+describe('manual questions and private Lie tokens', { timeout: 20_000 }, () => {
+  it('uses backend alarms for question expiry, truthful answer fallback, and undeclared answer skips', async () => {
+    const code = 'TACK'
+    await readyQA(code)
+    const records = async () => (await tool('alice', 'records.query', { collection: QUESTION_TURNS, where: { code } })).data.records as any[]
+    const expireSoon = async (turn: number) => {
+      const row = (await records()).find((r) => r.data.turn === turn)
+      expect((await tool('alice', 'records.update', { collection: QUESTION_TURNS, recordId: row.recordId, data: { phaseEndsAt: Date.now() + 200 } }, true)).success).toBe(true)
+      expect((await qa('alice', SYNC_QA_PATH, code, turn)).success).toBe(true)
+    }
+    const first = (await records())[0]
+    expect(first.data.status).toBe('asking')
+    expect(first.data.phaseEndsAt - Date.now()).toBeGreaterThan(28_000)
+    await expireSoon(1)
+    await expect.poll(async () => (await records()).find((r) => r.data.turn === 1)?.data.status).toBe('skipped')
+    expect(await qa('alice', QUESTION_PATH, code, 1, { question: 'Too late?' })).toMatchObject({ success: false, code: 'stale_turn' })
+    expect((await qa('bob', QUESTION_PATH, code, 2, { question: 'Does it use a ball?' })).success).toBe(true)
+    const answering = (await records()).find((r) => r.data.turn === 2).data
+    expect(answering.phaseEndsAt - Date.now()).toBeGreaterThan(13_000)
+    expect(answering.phaseEndsAt - Date.now()).toBeLessThanOrEqual(15_000)
+    await qa('alice', DECLARE_PATH, code, 2, { truth: 'Depends' })
+    const beforeRefresh = (await records()).find((r) => r.data.turn === 2).data.phaseEndsAt
+    await qa('alice', SYNC_QA_PATH, code, 2)
+    expect((await records()).find((r) => r.data.turn === 2).data.phaseEndsAt).toBe(beforeRefresh)
+    await expireSoon(2)
+    await expect.poll(async () => (await records()).find((r) => r.data.turn === 2)?.data.answer).toBe('Depends')
+    const privateRows = await tool('alice', 'records.query', { collection: PRIVATE_ANSWERS, where: { code } })
+    expect(privateRows.data.records[0].data).toMatchObject({ truth: 'Depends', sentAnswer: 'Depends', spentLie: 0 })
+    expect((await qa('alice', QUESTION_PATH, code, 3, { question: 'Undeclared answer?' })).success).toBe(true)
+    await expireSoon(3)
+    await expect.poll(async () => (await records()).find((r) => r.data.turn === 3)?.data.status).toBe('skipped')
+    const fourth = (await records()).find((r) => r.data.turn === 4).data
+    expect(fourth.status).toBe('asking')
+    expect(fourth.phaseEndsAt - Date.now()).toBeGreaterThan(28_000)
+  })
+
+  it('recovers a failed public answer write without changing the reserved answer or spending twice', async () => {
+    const code = 'RETR'
+    await readyQA(code)
+    await qa('alice', QUESTION_PATH, code, 1, { question: 'Does it use a ball?' })
+    await qa('bob', DECLARE_PATH, code, 1, { truth: 'Yes' })
+    // Inject a publication failure after a real private SQLite write. No other
+    // calls run concurrently in this fixture; production uses the DO gate.
+    const result = await questionAction(ANSWER_PATH, 'bob', { code, turn: 1, answer: 'No' }, {
+      query: (collection, options) => tool('bob', 'records.query', { collection, ...options }, true),
+      create: (collection, data, recordId) => tool('bob', 'records.create', { collection, data, recordId }, true),
+      update: (collection, recordId, data) => collection === QUESTION_TURNS
+        ? Promise.resolve({ success: false, error: 'Injected write failure' })
+        : tool('bob', 'records.update', { collection, recordId, data }, true),
+    })
+    expect(result).toMatchObject({ success: false, code: 'save_failed' })
+    expect(await qa('bob', ANSWER_PATH, code, 1, { answer: 'Yes' })).toMatchObject({ success: false, code: 'already_answered' })
+    expect((await qa('bob', ANSWER_PATH, code, 1, { answer: 'No' })).success).toBe(true)
+    const own = await tool('bob', 'records.query', { collection: PRIVATE_ANSWERS, where: { code } })
+    expect(own.data.records).toHaveLength(1)
+    expect(own.data.records[0].data).toMatchObject({ truth: 'Yes', sentAnswer: 'No', spentLie: 1 })
+    expect((await qa('bob', QUESTION_PATH, code, 2, { question: 'Next turn?' })).success).toBe(true)
+  })
+
+  it('alternates six turns exactly once, supports Depends, and enforces one lie per player', async () => {
+    const code = 'TURN'
+    await readyQA(code)
+    const ask = (id: string, turn: number) => qa(id, QUESTION_PATH, code, turn, { question: `Question ${turn}?` })
+    const declare = (id: string, turn: number, truth: string) => qa(id, DECLARE_PATH, code, turn, { truth })
+    const answer = (id: string, turn: number, sent: string) => qa(id, ANSWER_PATH, code, turn, { answer: sent })
+    expect(await ask('bob', 1)).toMatchObject({ success: false, code: 'wrong_role' })
+    const duplicateQuestions = await Promise.all([ask('alice', 1), ask('alice', 1)])
+    expect(duplicateQuestions.filter((r) => r.success)).toHaveLength(1)
+    expect(await answer('bob', 1, 'Yes')).toMatchObject({ success: false, code: 'declare_first' })
+    expect((await declare('bob', 1, 'Yes')).success).toBe(true)
+    expect(await declare('bob', 1, 'No')).toMatchObject({ success: false, code: 'already_declared' })
+    const duplicateAnswers = await Promise.all([answer('bob', 1, 'No'), answer('bob', 1, 'No')])
+    expect(duplicateAnswers.filter((r) => r.success)).toHaveLength(1)
+    expect(await ask('alice', 1)).toMatchObject({ success: false, code: 'stale_turn' })
+    // Truthful Depends preserves Alice's token.
+    expect((await ask('bob', 2)).success).toBe(true)
+    expect((await declare('alice', 2, 'Depends')).success).toBe(true)
+    expect((await answer('alice', 2, 'Depends')).success).toBe(true)
+    expect((await ask('alice', 3)).success).toBe(true)
+    expect((await declare('bob', 3, 'No')).success).toBe(true)
+    expect(await answer('bob', 3, 'Yes')).toMatchObject({ success: false, code: 'lie_used' })
+    expect((await answer('bob', 3, 'No')).success).toBe(true)
+    expect((await ask('bob', 4)).success).toBe(true)
+    expect((await declare('alice', 4, 'No')).success).toBe(true)
+    expect((await answer('alice', 4, 'Depends')).success).toBe(true)
+    expect((await ask('alice', 5)).success).toBe(true)
+    expect((await declare('bob', 5, 'Depends')).success).toBe(true)
+    expect((await answer('bob', 5, 'Depends')).success).toBe(true)
+    expect((await ask('bob', 6)).success).toBe(true)
+    expect((await declare('alice', 6, 'Yes')).success).toBe(true)
+    expect(await answer('alice', 6, 'No')).toMatchObject({ success: false, code: 'lie_used' })
+    expect((await answer('alice', 6, 'Yes')).success).toBe(true)
+    expect(await ask('alice', 7)).toMatchObject({ success: false, code: 'awaiting_guesses' })
+    const history = await tool('alice', 'records.query', { collection: QUESTION_TURNS, where: { code }, orderBy: 'turn', orderDir: 'asc' })
+    expect(history.data.records.map((r: any) => r.data.answer)).toEqual(['No', 'Depends', 'No', 'Depends', 'Depends', 'Yes'])
+    expect(history.data.records.filter((r: any) => r.data.askerId === 'alice')).toHaveLength(3)
+    for (const user of ['alice', 'bob']) {
+      const own = await tool(user, 'records.query', { collection: PRIVATE_ANSWERS, where: { code } })
+      expect(own.data.records).toHaveLength(3)
+      expect(own.data.records.filter((r: any) => r.data.spentLie === 1)).toHaveLength(1)
+    }
+  })
+
+  it('persists pending questions and declarations, filters private reads and WebSocket frames even for admin', async () => {
+    const code = 'HUSH'
+    await readyQA(code)
+    const aliceFrames = await subscribe('alice', code, [QUESTION_TURNS, PRIVATE_ANSWERS])
+    const bobFrames = await subscribe('bob', code, [QUESTION_TURNS, PRIVATE_ANSWERS])
+    expect((await qa('alice', QUESTION_PATH, code, 1, { question: 'Is it a team sport?' })).success).toBe(true)
+    expect((await qa('bob', DECLARE_PATH, code, 1, { truth: 'Depends' })).success).toBe(true)
+    // Fresh reads simulate reconnect: public pending phase + own declaration.
+    const pending = await tool('alice', 'records.query', { collection: QUESTION_TURNS, where: { code } })
+    expect(pending.data.records[0].data).toMatchObject({ turn: 1, question: 'Is it a team sport?' })
+    expect(pending.data.records[0].data.answer).toBeFalsy()
+    const own = await tool('bob', 'records.query', { collection: PRIVATE_ANSWERS, where: { code } })
+    expect(own.data.records[0].data.truth).toBe('Depends')
+    expect((await tool('alice', 'records.query', { collection: PRIVATE_ANSWERS, where: { code } })).data.records).toEqual([])
+    const guessed = await tool('alice', 'records.get', { collection: PRIVATE_ANSWERS, recordId: `truth:${code}:1` })
+    expect(guessed.success).toBe(false)
+    expect((await qa('bob', ANSWER_PATH, code, 1, { answer: 'Yes' })).success).toBe(true)
+    await expect.poll(() => aliceFrames.some((f) => f.type === 'core.record_change' && f.payload.collection === QUESTION_TURNS && f.payload.record.data.answer === 'Yes')).toBe(true)
+    expect(aliceFrames.filter((f) => f.type === 'core.record_change' && f.payload.collection === PRIVATE_ANSWERS)).toHaveLength(0)
+    await expect.poll(() => bobFrames.some((f) => f.type === 'core.record_change' && f.payload.collection === PRIVATE_ANSWERS && f.payload.record.data.spentLie === 1)).toBe(true)
+    expect((await qa('bob', QUESTION_PATH, code, 2, { question: 'Does it use a ball?' })).success).toBe(true)
+    expect((await qa('alice', DECLARE_PATH, code, 2, { truth: 'No' })).success).toBe(true)
+    const bobOwn = await tool('bob', 'records.query', { collection: PRIVATE_ANSWERS, where: { code } })
+    expect(bobOwn.data.records.map((r: any) => r.data.playerId)).toEqual(['bob'])
+    expect(bobFrames.filter((f) => f.type === 'core.record_change' && f.payload.collection === PRIVATE_ANSWERS).every((f) => f.payload.record.data.playerId === 'bob')).toBe(true)
+  })
+
+  it('rejects third players, role spoofing, direct writes, invalid input and actions after exit', async () => {
+    const code = 'SAFE'
+    await seed(code)
+    expect(await qa('alice', QUESTION_PATH, code, 1, { question: 'Hi?' })).toMatchObject({ success: false, code: 'not_ready' })
+    await select('alice', code, 'first')
+    await select('bob', code, 'second')
+    for (const path of [QUESTION_PATH, DECLARE_PATH, ANSWER_PATH]) {
+      expect(await qa('charlie', path, code, 1, { question: 'Hi?', truth: 'Yes', answer: 'No', playerId: 'bob' })).toMatchObject({ success: false, code: 'not_seated' })
+    }
+    expect(await qa('alice', QUESTION_PATH, code, 1, { question: '  ' })).toMatchObject({ success: false, code: 'invalid_question' })
+    expect((await qa('alice', QUESTION_PATH, code, 1, { question: 'A valid question?' })).success).toBe(true)
+    expect(await qa('alice', DECLARE_PATH, code, 1, { truth: 'Yes', playerId: 'bob' })).toMatchObject({ success: false, code: 'wrong_role' })
+    expect(await qa('bob', DECLARE_PATH, code, 1, { truth: 'Maybe' })).toMatchObject({ success: false, code: 'invalid_answer' })
+    for (const user of ['alice', 'bob', 'charlie']) {
+      for (const collection of [QUESTION_TURNS, PRIVATE_ANSWERS]) {
+        expect((await tool(user, 'records.create', { collection, data: { code, turn: 1, playerId: user, truth: 'Yes', question: 'Forged', askerId: user, answererId: user } })).success).toBe(false)
+        expect((await tool(user, 'records.update', { collection, recordId: `question:${code}:1`, data: { answer: 'Yes' } })).success).toBe(false)
+      }
+    }
+    await runtime.dispatchFetch(`http://test${EXIT_ROOM_PATH}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-App-Action': 'true', 'X-User-Id': 'bob' }, body: JSON.stringify({ code }) })
+    expect(await qa('bob', DECLARE_PATH, code, 1, { truth: 'Yes' })).toMatchObject({ success: false, code: 'room_closed' })
+  })
+})
 
 beforeAll(async () => {
   const bundled = await build({
@@ -92,7 +262,7 @@ async function ownSelections(userId: string, code: string) {
   return tool(userId, 'records.query', { collection: WORD_SELECTIONS, where: { code } })
 }
 
-async function subscribe(userId: string, code: string) {
+async function subscribe(userId: string, code: string, collections = [LOBBY_SEATS, WORD_SELECTIONS]) {
   const response = await runtime.dispatchFetch('http://test/ws/selection-tests', {
     // Match authenticatedRoomRequest's internal WebSocket identity encoding.
     headers: { Upgrade: 'websocket', 'X-User-Id': Buffer.from(userId).toString('base64url'), 'X-User-Name': Buffer.from(userId).toString('base64url') },
@@ -103,12 +273,12 @@ async function subscribe(userId: string, code: string) {
   ws.addEventListener('message', (event) => frames.push(JSON.parse(String(event.data))))
   ws.accept()
   sockets.push(ws)
-  for (const collection of [LOBBY_SEATS, WORD_SELECTIONS]) {
+  for (const collection of collections) {
     ws.send(JSON.stringify({ type: 'core.subscribe', payload: {
       subscriptionId: collection, query: { collection, where: { code } },
     } }))
   }
-  await expect.poll(() => frames.filter((frame) => frame.type === 'core.query_result').length).toBe(2)
+  await expect.poll(() => frames.filter((frame) => frame.type === 'core.query_result').length).toBe(collections.length)
   return frames
 }
 

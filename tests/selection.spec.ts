@@ -66,7 +66,7 @@ test('word selection: Start opens the duel, words submit once, remain private an
   await b.page.getByRole('button', { name: 'Lock in word' }).click()
   for (const player of [a, b]) {
     await expect(player.page.getByTestId('selections-locked')).toContainText('Both players ready')
-    await expect(player.page.getByRole('timer')).toHaveCount(0)
+    await expect(player.page.getByRole('timer', { name: 'Time remaining', exact: true })).toHaveCount(0)
     await expect(player.page.getByTestId('selection-timer')).toHaveCount(0)
     await expect(player.page.getByTestId('opponent-secret')).toHaveText('?????')
     await expect(player.page.getByLabel('Your secret word', { exact: true })).toHaveCount(0)
@@ -109,7 +109,7 @@ test('word selection: Start opens the duel, words submit once, remain private an
   await expect(a.page.getByRole('dialog', { name: 'One Lie duel' })).toBeVisible()
   await expect(a.page.getByTestId('room-restoring')).toHaveCount(0)
   await expect(a.page.getByTestId('own-secret-word')).toHaveText('My freely typed word')
-  await expect(a.page.getByRole('timer')).toHaveCount(0)
+  await expect(a.page.getByRole('timer', { name: 'Time remaining', exact: true })).toHaveCount(0)
 
   await a.page.setViewportSize({ width: 390, height: 844 })
   await a.page.screenshot({ path: '.deepspace/duel-mobile.png', fullPage: true })
@@ -129,7 +129,7 @@ test('word selection: the shared 20-second deadline locks an empty word for a pl
   await b.page.getByLabel('Your secret word', { exact: true }).fill('Unsubmitted draft')
   await expect(b.page.getByTestId('own-secret-word')).toHaveText('Empty word', { timeout: 25_000 })
   await expect(b.page.getByTestId('selections-locked')).toBeVisible()
-  await expect(b.page.getByRole('timer')).toHaveCount(0)
+  await expect(b.page.getByRole('timer', { name: 'Time remaining', exact: true })).toHaveCount(0)
   await expect(a.page.getByTestId('own-secret-word')).toHaveText('Submitted in time')
   await b.page.reload()
   await expect(b.page.getByTestId('own-secret-word')).toHaveText('Empty word')
@@ -203,7 +203,7 @@ for (const hostOffset of [-30_000, 30_000]) {
     await expect(b.page.getByTestId('own-secret-word')).toHaveText('Guest had a fair chance')
     for (const player of [a, b]) {
       await expect(player.page.getByTestId('selections-locked')).toBeVisible()
-      await expect(player.page.getByRole('timer')).toHaveCount(0)
+      await expect(player.page.getByRole('timer', { name: 'Time remaining', exact: true })).toHaveCount(0)
       await expect(player.page.getByTestId('opponent-secret')).toHaveText('?????')
     }
   })

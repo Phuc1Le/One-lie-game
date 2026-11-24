@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState, type FormEvent } from 'react'
 import { useQuery } from 'deepspace'
-import { ArrowRight, LockKeyhole, LogOut, UserRound } from 'lucide-react'
+import { ArrowRight, LockKeyhole, LogOut } from 'lucide-react'
 import { Button, Input } from './ui'
 import { CATEGORIES, roomCategory } from '../game/categories'
 import { CATEGORY_REVEAL_MS, WORD_SELECTION_MS } from '../game/timing'
@@ -8,6 +8,8 @@ import type { LobbySeat } from '../schemas/lobby-schema'
 import { WORD_SELECTIONS, type WordSelection } from '../schemas/word-selection-schema'
 import { requestRoomAction } from '../lib/room-action'
 import { useServerClock } from '../lib/use-server-clock'
+import QuestionPanel from './QuestionPanel'
+import DuelPlayer from './DuelPlayer'
 
 export default function WordSelectionPanel({ code, seats, userId, startedAt, selectionEndsAt, categoryId, onExit, exiting, actionError }: {
   code: string; seats: LobbySeat[]; userId: string; startedAt: number; selectionEndsAt: number; categoryId?: string
@@ -59,20 +61,13 @@ export default function WordSelectionPanel({ code, seats, userId, startedAt, sel
         <span className="duel-wordmark">One Lie<span>.</span></span>
         <span className="duel-room">ROOM {code}</span>
       </header>
-      <div className="duel-arena">
-        {[...seats].sort((a, b) => a.seat - b.seat).map((player, index) => {
+      {actionError && <p role="alert" className="duel-error px-6">{actionError}</p>}
+      {locked ? <QuestionPanel code={code} seats={seats} userId={userId} word={selection?.word} category={category.label} /> : <div className="duel-arena">
+        {[...seats].sort((a, b) => a.seat - b.seat).map((player) => {
           const own = player.playerId === userId
           return (
-            <section key={player.seat} className={`duel-player duel-player-${index === 0 ? 'left' : 'right'}`} data-testid={`duel-player-${player.seat}`} aria-label={own ? 'Your player' : 'Opponent'}>
-              <div className={`duel-secret ${own && selection ? 'duel-secret-revealed' : ''}`}>
-                {own && selection ? <span data-testid="own-secret-word">{selection.word || 'Empty word'}</span> : <span data-testid={own ? 'own-word-placeholder' : 'opponent-secret'}>{own ? 'Your secret' : '?????'}</span>}
-                <LockKeyhole size={14} aria-hidden="true" />
-              </div>
-              <div className={`duel-avatar ${player.ready === 1 ? 'duel-avatar-ready' : ''}`}><UserRound aria-hidden="true" strokeWidth={1.1} /></div>
-              <h2 className="duel-player-name">{player.displayName}</h2>
-              <p className="duel-player-label">{own ? 'YOU' : 'YOUR OPPONENT'}</p>
-              <p className="duel-player-status" data-testid={`duel-ready-${player.seat}`}>{player.ready === 1 ? 'Locked in' : syncing || spinning ? 'Getting ready' : 'Choosing a word'}</p>
-            </section>
+            <DuelPlayer key={player.seat} player={player} own={own} word={own ? selection?.word : undefined}
+              status={player.ready === 1 ? 'Locked in' : syncing || spinning ? 'Getting ready' : 'Choosing a word'} />
           )
         })}
 
@@ -93,7 +88,6 @@ export default function WordSelectionPanel({ code, seats, userId, startedAt, sel
 
           {syncing ? <div className="duel-hint"><p role="status">Synchronizing the game timer…</p>{clock.error && <><p role="alert">{clock.error}</p><Button variant="link" onClick={clock.retry}>Retry timer sync</Button></>}</div>
             : spinning ? <p role="status" className="duel-hint">Let fate pick the category.</p>
-            : locked ? <div className="duel-sealed" role="status" data-testid="selections-locked"><LockKeyhole size={22} aria-hidden="true" /><h3>Both players ready</h3><p>Your secrets are sealed.</p></div>
             : status === 'error' ? <p role="alert" className="duel-error">{loadError ?? 'Could not load your word. Refresh to reconnect.'}</p>
             : status === 'loading' ? <p role="status" className="duel-hint">Loading your word…</p>
             : submitted ? <div className="duel-sealed" role="status"><LockKeyhole size={22} aria-hidden="true" /><h3>Your word is sealed</h3><p>Waiting for your opponent.</p></div>
@@ -105,9 +99,9 @@ export default function WordSelectionPanel({ code, seats, userId, startedAt, sel
                 <Button type="submit" disabled={pending || !draft.trim()} loading={pending} aria-label="Lock in word"><ArrowRight aria-hidden="true" /></Button></div>
               <p className="duel-hint">One choice. No takebacks.<br />If time runs out, your word will be empty.</p>
             </form>}
-          {(error || actionError) && <p role="alert" className="duel-error">{error || actionError}</p>}
+          {error && <p role="alert" className="duel-error">{error}</p>}
         </section>
-      </div>
+      </div>}
       <p className="duel-footer">TWO PLAYERS. TWO SECRETS. ONE LIE.</p>
     </dialog>
   )
