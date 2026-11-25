@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, useState, type FormEvent } from 'react'
 import { useQuery } from 'deepspace'
 import { ArrowRight, LockKeyhole, LogOut } from 'lucide-react'
 import { Button, Input } from './ui'
-import { CATEGORIES, roomCategory } from '../game/categories'
+import { CATEGORIES, matchWord, roomCategory } from '../game/categories'
 import { CATEGORY_REVEAL_MS, WORD_SELECTION_MS } from '../game/timing'
 import type { LobbySeat } from '../schemas/lobby-schema'
 import { WORD_SELECTIONS, type WordSelection } from '../schemas/word-selection-schema'
@@ -26,6 +26,8 @@ export default function WordSelectionPanel({ code, seats, userId, startedAt, sel
   const [draft, setDraft] = useState('')
   const [pending, setPending] = useState(false)
   const [error, setError] = useState('')
+  const wordMatch = matchWord(category.id, draft)
+  const curated = CATEGORIES.some((entry) => entry.id === category.id)
   const clock = useServerClock(code, !locked)
   const syncing = !locked && clock.now === null
   const animateEntrance = clock.initialNow !== null && clock.initialNow - startedAt < 1200
@@ -96,7 +98,10 @@ export default function WordSelectionPanel({ code, seats, userId, startedAt, sel
               <label htmlFor="secret-word">Your secret word</label>
               <div className="duel-input-row"><Input id="secret-word" autoComplete="off" autoCapitalize="off" spellCheck={false} maxLength={40} value={draft}
                 onChange={(event) => { setDraft(event.target.value); setError('') }} disabled={pending} placeholder="Type your word…" />
-                <Button type="submit" disabled={pending || !draft.trim()} loading={pending} aria-label="Lock in word"><ArrowRight aria-hidden="true" /></Button></div>
+                <Button type="submit" disabled={pending || !draft.trim() || (curated && !wordMatch.canonical)} loading={pending} aria-label="Lock in word"><ArrowRight aria-hidden="true" /></Button></div>
+              {wordMatch.suggestion && <Button type="button" variant="link" onClick={() => setDraft(wordMatch.suggestion!)}>Use “{wordMatch.suggestion}”</Button>}
+              {wordMatch.canonical && <p className="duel-hint">Will save as: {wordMatch.canonical}</p>}
+              {curated && <details className="duel-hint"><summary>Accepted words in this category</summary><p>{category.words.join(', ')}</p></details>}
               <p className="duel-hint">One choice. No takebacks.<br />If time runs out, your word will be empty.</p>
             </form>}
           {error && <p role="alert" className="duel-error">{error}</p>}

@@ -1,0 +1,1497 @@
+{
+  "schema_version": "1.0.0",
+  "title": "One Lie Game - Starter Category Pack",
+  "language": "en",
+  "normalization": {
+    "canonical_matching": "case_insensitive",
+    "trim_whitespace": true,
+    "collapse_internal_whitespace": true,
+    "ignore_terminal_punctuation": true,
+    "unicode_normalization": "NFKC",
+    "typo_correction": {
+      "enabled": true,
+      "policy": "Suggest a canonical answer only when there is one unambiguous close match. Never silently map an ambiguous input."
+    },
+    "alias_policy": "Aliases are accepted as exact equivalents of their canonical answer. Do not treat notes as aliases.",
+    "ai_policy": "The AI may interpret and normalize a player's input, but the server must accept it only if the resulting canonical value exactly matches an answer in this category."
+  },
+  "categories": [
+    {
+      "id": "planets",
+      "name": "Planets in the Solar System",
+      "description": "The eight currently recognized planets, excluding dwarf planets.",
+      "answers": [
+        {
+          "canonical": "Mercury",
+          "aliases": []
+        },
+        {
+          "canonical": "Venus",
+          "aliases": []
+        },
+        {
+          "canonical": "Earth",
+          "aliases": [
+            "the Earth",
+            "Terra"
+          ]
+        },
+        {
+          "canonical": "Mars",
+          "aliases": [
+            "the Red Planet"
+          ]
+        },
+        {
+          "canonical": "Jupiter",
+          "aliases": []
+        },
+        {
+          "canonical": "Saturn",
+          "aliases": []
+        },
+        {
+          "canonical": "Uranus",
+          "aliases": []
+        },
+        {
+          "canonical": "Neptune",
+          "aliases": []
+        }
+      ]
+    },
+    {
+      "id": "months",
+      "name": "Months of the Year",
+      "description": "The twelve months in the Gregorian calendar.",
+      "answers": [
+        {
+          "canonical": "January",
+          "aliases": [
+            "Jan"
+          ]
+        },
+        {
+          "canonical": "February",
+          "aliases": [
+            "Feb"
+          ]
+        },
+        {
+          "canonical": "March",
+          "aliases": [
+            "Mar"
+          ]
+        },
+        {
+          "canonical": "April",
+          "aliases": [
+            "Apr"
+          ]
+        },
+        {
+          "canonical": "May",
+          "aliases": []
+        },
+        {
+          "canonical": "June",
+          "aliases": [
+            "Jun"
+          ]
+        },
+        {
+          "canonical": "July",
+          "aliases": [
+            "Jul"
+          ]
+        },
+        {
+          "canonical": "August",
+          "aliases": [
+            "Aug"
+          ]
+        },
+        {
+          "canonical": "September",
+          "aliases": [
+            "Sep",
+            "Sept"
+          ]
+        },
+        {
+          "canonical": "October",
+          "aliases": [
+            "Oct"
+          ]
+        },
+        {
+          "canonical": "November",
+          "aliases": [
+            "Nov"
+          ]
+        },
+        {
+          "canonical": "December",
+          "aliases": [
+            "Dec"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "weekdays",
+      "name": "Days of the Week",
+      "description": "The seven days in the standard Monday-to-Sunday week.",
+      "answers": [
+        {
+          "canonical": "Monday",
+          "aliases": [
+            "Mon"
+          ]
+        },
+        {
+          "canonical": "Tuesday",
+          "aliases": [
+            "Tue",
+            "Tues"
+          ]
+        },
+        {
+          "canonical": "Wednesday",
+          "aliases": [
+            "Wed"
+          ]
+        },
+        {
+          "canonical": "Thursday",
+          "aliases": [
+            "Thu",
+            "Thur",
+            "Thurs"
+          ]
+        },
+        {
+          "canonical": "Friday",
+          "aliases": [
+            "Fri"
+          ]
+        },
+        {
+          "canonical": "Saturday",
+          "aliases": [
+            "Sat"
+          ]
+        },
+        {
+          "canonical": "Sunday",
+          "aliases": [
+            "Sun"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zodiac_signs",
+      "name": "Western Zodiac Signs",
+      "description": "The twelve signs of the tropical Western zodiac.",
+      "answers": [
+        {
+          "canonical": "Aries",
+          "aliases": []
+        },
+        {
+          "canonical": "Taurus",
+          "aliases": []
+        },
+        {
+          "canonical": "Gemini",
+          "aliases": []
+        },
+        {
+          "canonical": "Cancer",
+          "aliases": []
+        },
+        {
+          "canonical": "Leo",
+          "aliases": []
+        },
+        {
+          "canonical": "Virgo",
+          "aliases": []
+        },
+        {
+          "canonical": "Libra",
+          "aliases": []
+        },
+        {
+          "canonical": "Scorpio",
+          "aliases": []
+        },
+        {
+          "canonical": "Sagittarius",
+          "aliases": [
+            "Sag"
+          ]
+        },
+        {
+          "canonical": "Capricorn",
+          "aliases": [
+            "Cap"
+          ]
+        },
+        {
+          "canonical": "Aquarius",
+          "aliases": []
+        },
+        {
+          "canonical": "Pisces",
+          "aliases": []
+        }
+      ]
+    },
+    {
+      "id": "continents",
+      "name": "Continents",
+      "description": "The seven-continent model.",
+      "answers": [
+        {
+          "canonical": "Africa",
+          "aliases": []
+        },
+        {
+          "canonical": "Antarctica",
+          "aliases": []
+        },
+        {
+          "canonical": "Asia",
+          "aliases": []
+        },
+        {
+          "canonical": "Europe",
+          "aliases": []
+        },
+        {
+          "canonical": "North America",
+          "aliases": [
+            "Northern America"
+          ]
+        },
+        {
+          "canonical": "South America",
+          "aliases": [
+            "Southern America"
+          ]
+        },
+        {
+          "canonical": "Australia",
+          "aliases": [
+            "Oceania"
+          ],
+          "notes": "Oceania is often used for the broader region; accept it only if your game intentionally treats Australia and Oceania as equivalent."
+        }
+      ]
+    },
+    {
+      "id": "oceans",
+      "name": "World Oceans",
+      "description": "The five-ocean model.",
+      "answers": [
+        {
+          "canonical": "Arctic Ocean",
+          "aliases": [
+            "Arctic"
+          ]
+        },
+        {
+          "canonical": "Atlantic Ocean",
+          "aliases": [
+            "Atlantic"
+          ]
+        },
+        {
+          "canonical": "Indian Ocean",
+          "aliases": [
+            "Indian"
+          ]
+        },
+        {
+          "canonical": "Pacific Ocean",
+          "aliases": [
+            "Pacific"
+          ]
+        },
+        {
+          "canonical": "Southern Ocean",
+          "aliases": [
+            "Antarctic Ocean",
+            "Southern"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "chess_pieces",
+      "name": "Chess Pieces",
+      "description": "The six types of pieces used in standard chess.",
+      "answers": [
+        {
+          "canonical": "King",
+          "aliases": []
+        },
+        {
+          "canonical": "Queen",
+          "aliases": []
+        },
+        {
+          "canonical": "Rook",
+          "aliases": [
+            "Castle"
+          ]
+        },
+        {
+          "canonical": "Bishop",
+          "aliases": []
+        },
+        {
+          "canonical": "Knight",
+          "aliases": [
+            "Horse"
+          ]
+        },
+        {
+          "canonical": "Pawn",
+          "aliases": []
+        }
+      ]
+    },
+    {
+      "id": "card_suits",
+      "name": "Playing Card Suits",
+      "description": "The four suits in a standard French-suited deck.",
+      "answers": [
+        {
+          "canonical": "Hearts",
+          "aliases": [
+            "Heart"
+          ]
+        },
+        {
+          "canonical": "Diamonds",
+          "aliases": [
+            "Diamond"
+          ]
+        },
+        {
+          "canonical": "Clubs",
+          "aliases": [
+            "Club"
+          ]
+        },
+        {
+          "canonical": "Spades",
+          "aliases": [
+            "Spade"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "geometric_shapes",
+      "name": "Basic Geometric Shapes",
+      "description": "Common two-dimensional shapes. Use the listed everyday names, not broader mathematical families.",
+      "answers": [
+        {
+          "canonical": "Circle",
+          "aliases": [
+            "Round"
+          ]
+        },
+        {
+          "canonical": "Oval",
+          "aliases": [
+            "Ellipse"
+          ]
+        },
+        {
+          "canonical": "Triangle",
+          "aliases": []
+        },
+        {
+          "canonical": "Square",
+          "aliases": []
+        },
+        {
+          "canonical": "Rectangle",
+          "aliases": []
+        },
+        {
+          "canonical": "Rhombus",
+          "aliases": [
+            "Diamond shape"
+          ]
+        },
+        {
+          "canonical": "Parallelogram",
+          "aliases": []
+        },
+        {
+          "canonical": "Trapezoid",
+          "aliases": [
+            "Trapezium"
+          ],
+          "notes": "Terminology differs between US and UK mathematics; decide which convention your game uses."
+        },
+        {
+          "canonical": "Pentagon",
+          "aliases": []
+        },
+        {
+          "canonical": "Hexagon",
+          "aliases": []
+        },
+        {
+          "canonical": "Heptagon",
+          "aliases": []
+        },
+        {
+          "canonical": "Octagon",
+          "aliases": []
+        },
+        {
+          "canonical": "Nonagon",
+          "aliases": [
+            "Enneagon"
+          ]
+        },
+        {
+          "canonical": "Decagon",
+          "aliases": []
+        },
+        {
+          "canonical": "Star",
+          "aliases": [
+            "Five-pointed star"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "colors",
+      "name": "Common Colors",
+      "description": "A deliberately limited palette of familiar basic color names.",
+      "answers": [
+        {
+          "canonical": "Red",
+          "aliases": []
+        },
+        {
+          "canonical": "Orange",
+          "aliases": []
+        },
+        {
+          "canonical": "Yellow",
+          "aliases": []
+        },
+        {
+          "canonical": "Green",
+          "aliases": []
+        },
+        {
+          "canonical": "Blue",
+          "aliases": []
+        },
+        {
+          "canonical": "Purple",
+          "aliases": [
+            "Violet"
+          ]
+        },
+        {
+          "canonical": "Pink",
+          "aliases": []
+        },
+        {
+          "canonical": "Brown",
+          "aliases": []
+        },
+        {
+          "canonical": "Black",
+          "aliases": []
+        },
+        {
+          "canonical": "White",
+          "aliases": []
+        },
+        {
+          "canonical": "Gray",
+          "aliases": [
+            "Grey"
+          ]
+        },
+        {
+          "canonical": "Cyan",
+          "aliases": [
+            "Aqua"
+          ]
+        },
+        {
+          "canonical": "Magenta",
+          "aliases": [
+            "Fuchsia"
+          ]
+        },
+        {
+          "canonical": "Beige",
+          "aliases": []
+        },
+        {
+          "canonical": "Gold",
+          "aliases": [
+            "Golden"
+          ]
+        },
+        {
+          "canonical": "Silver",
+          "aliases": []
+        }
+      ]
+    },
+    {
+      "id": "musical_instruments",
+      "name": "Musical Instruments",
+      "description": "Common instrument families and individual instruments; answers are specific instrument names.",
+      "answers": [
+        {
+          "canonical": "Piano",
+          "aliases": [
+            "Grand piano",
+            "Upright piano"
+          ]
+        },
+        {
+          "canonical": "Guitar",
+          "aliases": [
+            "Acoustic guitar",
+            "Electric guitar"
+          ]
+        },
+        {
+          "canonical": "Violin",
+          "aliases": [
+            "Fiddle"
+          ]
+        },
+        {
+          "canonical": "Viola",
+          "aliases": []
+        },
+        {
+          "canonical": "Cello",
+          "aliases": [
+            "Violoncello"
+          ]
+        },
+        {
+          "canonical": "Double bass",
+          "aliases": [
+            "Upright bass",
+            "Contrabass"
+          ]
+        },
+        {
+          "canonical": "Harp",
+          "aliases": []
+        },
+        {
+          "canonical": "Flute",
+          "aliases": [
+            "Concert flute"
+          ]
+        },
+        {
+          "canonical": "Clarinet",
+          "aliases": []
+        },
+        {
+          "canonical": "Oboe",
+          "aliases": []
+        },
+        {
+          "canonical": "Bassoon",
+          "aliases": []
+        },
+        {
+          "canonical": "Trumpet",
+          "aliases": []
+        },
+        {
+          "canonical": "Trombone",
+          "aliases": []
+        },
+        {
+          "canonical": "French horn",
+          "aliases": [
+            "Horn"
+          ]
+        },
+        {
+          "canonical": "Tuba",
+          "aliases": []
+        },
+        {
+          "canonical": "Drum kit",
+          "aliases": [
+            "Drum set",
+            "Drums"
+          ]
+        },
+        {
+          "canonical": "Saxophone",
+          "aliases": [
+            "Sax"
+          ]
+        },
+        {
+          "canonical": "Harmonica",
+          "aliases": [
+            "Mouth organ"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fruits",
+      "name": "Common Fruits",
+      "description": "A curated everyday list. Botanical edge cases are intentionally excluded.",
+      "answers": [
+        {
+          "canonical": "Apple",
+          "aliases": []
+        },
+        {
+          "canonical": "Banana",
+          "aliases": []
+        },
+        {
+          "canonical": "Orange",
+          "aliases": []
+        },
+        {
+          "canonical": "Strawberry",
+          "aliases": []
+        },
+        {
+          "canonical": "Blueberry",
+          "aliases": []
+        },
+        {
+          "canonical": "Raspberry",
+          "aliases": []
+        },
+        {
+          "canonical": "Blackberry",
+          "aliases": []
+        },
+        {
+          "canonical": "Grape",
+          "aliases": [
+            "Grapes"
+          ]
+        },
+        {
+          "canonical": "Watermelon",
+          "aliases": []
+        },
+        {
+          "canonical": "Pineapple",
+          "aliases": []
+        },
+        {
+          "canonical": "Mango",
+          "aliases": []
+        },
+        {
+          "canonical": "Peach",
+          "aliases": []
+        },
+        {
+          "canonical": "Pear",
+          "aliases": []
+        },
+        {
+          "canonical": "Cherry",
+          "aliases": [
+            "Cherries"
+          ]
+        },
+        {
+          "canonical": "Lemon",
+          "aliases": []
+        },
+        {
+          "canonical": "Lime",
+          "aliases": []
+        },
+        {
+          "canonical": "Kiwi",
+          "aliases": [
+            "Kiwi fruit",
+            "Kiwifruit"
+          ]
+        },
+        {
+          "canonical": "Coconut",
+          "aliases": []
+        }
+      ]
+    },
+    {
+      "id": "vegetables",
+      "name": "Common Vegetables",
+      "description": "A curated everyday cooking list; culinary rather than botanical classification is used.",
+      "answers": [
+        {
+          "canonical": "Carrot",
+          "aliases": []
+        },
+        {
+          "canonical": "Broccoli",
+          "aliases": []
+        },
+        {
+          "canonical": "Cauliflower",
+          "aliases": []
+        },
+        {
+          "canonical": "Spinach",
+          "aliases": []
+        },
+        {
+          "canonical": "Lettuce",
+          "aliases": []
+        },
+        {
+          "canonical": "Cabbage",
+          "aliases": []
+        },
+        {
+          "canonical": "Kale",
+          "aliases": []
+        },
+        {
+          "canonical": "Potato",
+          "aliases": [
+            "White potato"
+          ]
+        },
+        {
+          "canonical": "Sweet potato",
+          "aliases": [
+            "Yam"
+          ],
+          "notes": "Yam and sweet potato are botanically different; accepting yam is a casual-language convenience."
+        },
+        {
+          "canonical": "Onion",
+          "aliases": []
+        },
+        {
+          "canonical": "Garlic",
+          "aliases": []
+        },
+        {
+          "canonical": "Cucumber",
+          "aliases": []
+        },
+        {
+          "canonical": "Bell pepper",
+          "aliases": [
+            "Sweet pepper",
+            "Capsicum"
+          ]
+        },
+        {
+          "canonical": "Tomato",
+          "aliases": []
+        },
+        {
+          "canonical": "Zucchini",
+          "aliases": [
+            "Courgette"
+          ]
+        },
+        {
+          "canonical": "Eggplant",
+          "aliases": [
+            "Aubergine"
+          ]
+        },
+        {
+          "canonical": "Celery",
+          "aliases": []
+        },
+        {
+          "canonical": "Asparagus",
+          "aliases": []
+        }
+      ]
+    },
+    {
+      "id": "herbs",
+      "name": "Common Culinary Herbs",
+      "description": "Commonly used fresh or dried culinary herbs.",
+      "answers": [
+        {
+          "canonical": "Basil",
+          "aliases": []
+        },
+        {
+          "canonical": "Parsley",
+          "aliases": []
+        },
+        {
+          "canonical": "Cilantro",
+          "aliases": [
+            "Coriander leaves",
+            "Fresh coriander"
+          ]
+        },
+        {
+          "canonical": "Mint",
+          "aliases": [
+            "Spearmint"
+          ],
+          "notes": "Mint is a broad everyday label; spearmint is treated as the same answer here."
+        },
+        {
+          "canonical": "Rosemary",
+          "aliases": []
+        },
+        {
+          "canonical": "Thyme",
+          "aliases": []
+        },
+        {
+          "canonical": "Oregano",
+          "aliases": []
+        },
+        {
+          "canonical": "Sage",
+          "aliases": []
+        },
+        {
+          "canonical": "Dill",
+          "aliases": []
+        },
+        {
+          "canonical": "Chives",
+          "aliases": [
+            "Chive"
+          ]
+        },
+        {
+          "canonical": "Tarragon",
+          "aliases": []
+        },
+        {
+          "canonical": "Bay leaf",
+          "aliases": [
+            "Bay leaves",
+            "Laurel"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dog_breeds",
+      "name": "Popular Dog Breeds",
+      "description": "A selected list of recognizable dog breeds, not an exhaustive breed registry.",
+      "answers": [
+        {
+          "canonical": "Labrador Retriever",
+          "aliases": [
+            "Labrador",
+            "Lab"
+          ]
+        },
+        {
+          "canonical": "Golden Retriever",
+          "aliases": [
+            "Golden"
+          ]
+        },
+        {
+          "canonical": "German Shepherd",
+          "aliases": [
+            "Alsatian"
+          ]
+        },
+        {
+          "canonical": "French Bulldog",
+          "aliases": [
+            "Frenchie"
+          ]
+        },
+        {
+          "canonical": "Bulldog",
+          "aliases": [
+            "English Bulldog"
+          ]
+        },
+        {
+          "canonical": "Poodle",
+          "aliases": [
+            "Standard Poodle"
+          ]
+        },
+        {
+          "canonical": "Beagle",
+          "aliases": []
+        },
+        {
+          "canonical": "Rottweiler",
+          "aliases": [
+            "Rottie"
+          ]
+        },
+        {
+          "canonical": "Dachshund",
+          "aliases": [
+            "Wiener dog",
+            "Sausage dog"
+          ]
+        },
+        {
+          "canonical": "Siberian Husky",
+          "aliases": [
+            "Husky"
+          ]
+        },
+        {
+          "canonical": "Shih Tzu",
+          "aliases": [
+            "Shitzu"
+          ]
+        },
+        {
+          "canonical": "Chihuahua",
+          "aliases": []
+        },
+        {
+          "canonical": "Boxer",
+          "aliases": []
+        },
+        {
+          "canonical": "Great Dane",
+          "aliases": []
+        },
+        {
+          "canonical": "Border Collie",
+          "aliases": []
+        },
+        {
+          "canonical": "Corgi",
+          "aliases": [
+            "Welsh Corgi"
+          ]
+        },
+        {
+          "canonical": "Pomeranian",
+          "aliases": [
+            "Pom"
+          ]
+        },
+        {
+          "canonical": "Australian Shepherd",
+          "aliases": [
+            "Aussie"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "us_coins",
+      "name": "US Coin Denominations",
+      "description": "Common circulating and historically familiar US coin denominations; not paper money.",
+      "answers": [
+        {
+          "canonical": "Penny",
+          "aliases": [
+            "One-cent coin",
+            "Cent"
+          ]
+        },
+        {
+          "canonical": "Nickel",
+          "aliases": [
+            "Five-cent coin"
+          ]
+        },
+        {
+          "canonical": "Dime",
+          "aliases": [
+            "Ten-cent coin"
+          ]
+        },
+        {
+          "canonical": "Quarter",
+          "aliases": [
+            "Quarter dollar",
+            "Twenty-five-cent coin"
+          ]
+        },
+        {
+          "canonical": "Half dollar",
+          "aliases": [
+            "Fifty-cent coin",
+            "Half-dollar"
+          ]
+        },
+        {
+          "canonical": "Dollar coin",
+          "aliases": [
+            "One-dollar coin",
+            "Gold dollar"
+          ],
+          "notes": "Gold dollar is a colloquial reference to some dollar coins, not a distinct denomination."
+        }
+      ]
+    },
+    {
+      "id": "mythical_creatures",
+      "name": "Mythical Creatures",
+      "description": "Well-known creatures from mythology and folklore.",
+      "answers": [
+        {
+          "canonical": "Dragon",
+          "aliases": []
+        },
+        {
+          "canonical": "Unicorn",
+          "aliases": []
+        },
+        {
+          "canonical": "Phoenix",
+          "aliases": [
+            "The Phoenix"
+          ]
+        },
+        {
+          "canonical": "Griffin",
+          "aliases": [
+            "Gryphon"
+          ]
+        },
+        {
+          "canonical": "Mermaid",
+          "aliases": [
+            "Merman"
+          ],
+          "notes": "Mermaid and merman are grouped as one creature type."
+        },
+        {
+          "canonical": "Centaur",
+          "aliases": []
+        },
+        {
+          "canonical": "Minotaur",
+          "aliases": []
+        },
+        {
+          "canonical": "Cyclops",
+          "aliases": [
+            "Cyclope"
+          ]
+        },
+        {
+          "canonical": "Pegasus",
+          "aliases": []
+        },
+        {
+          "canonical": "Sphinx",
+          "aliases": []
+        },
+        {
+          "canonical": "Werewolf",
+          "aliases": [
+            "Lycanthrope"
+          ]
+        },
+        {
+          "canonical": "Vampire",
+          "aliases": []
+        },
+        {
+          "canonical": "Goblin",
+          "aliases": []
+        },
+        {
+          "canonical": "Fairy",
+          "aliases": [
+            "Faerie",
+            "Fae"
+          ]
+        },
+        {
+          "canonical": "Kraken",
+          "aliases": []
+        },
+        {
+          "canonical": "Yeti",
+          "aliases": [
+            "Abominable Snowman"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "body_organs",
+      "name": "Human Body Organs",
+      "description": "A selected list of familiar internal organs. Paired organs count as one answer.",
+      "answers": [
+        {
+          "canonical": "Brain",
+          "aliases": []
+        },
+        {
+          "canonical": "Heart",
+          "aliases": []
+        },
+        {
+          "canonical": "Lungs",
+          "aliases": [
+            "Lung"
+          ]
+        },
+        {
+          "canonical": "Liver",
+          "aliases": []
+        },
+        {
+          "canonical": "Stomach",
+          "aliases": []
+        },
+        {
+          "canonical": "Kidneys",
+          "aliases": [
+            "Kidney"
+          ]
+        },
+        {
+          "canonical": "Pancreas",
+          "aliases": []
+        },
+        {
+          "canonical": "Spleen",
+          "aliases": []
+        },
+        {
+          "canonical": "Small intestine",
+          "aliases": [
+            "Small bowel"
+          ]
+        },
+        {
+          "canonical": "Large intestine",
+          "aliases": [
+            "Colon",
+            "Large bowel"
+          ]
+        },
+        {
+          "canonical": "Gallbladder",
+          "aliases": [
+            "Gall bladder"
+          ]
+        },
+        {
+          "canonical": "Bladder",
+          "aliases": [
+            "Urinary bladder"
+          ]
+        },
+        {
+          "canonical": "Esophagus",
+          "aliases": [
+            "Oesophagus",
+            "Food pipe"
+          ]
+        },
+        {
+          "canonical": "Thyroid",
+          "aliases": [
+            "Thyroid gland"
+          ]
+        },
+        {
+          "canonical": "Appendix",
+          "aliases": []
+        }
+      ]
+    },
+    {
+      "id": "pasta_shapes",
+      "name": "Pasta Shapes",
+      "description": "Common named pasta shapes; broad categories such as noodles are not accepted.",
+      "answers": [
+        {
+          "canonical": "Spaghetti",
+          "aliases": []
+        },
+        {
+          "canonical": "Penne",
+          "aliases": []
+        },
+        {
+          "canonical": "Macaroni",
+          "aliases": [
+            "Maccheroni",
+            "Elbow macaroni"
+          ]
+        },
+        {
+          "canonical": "Fusilli",
+          "aliases": [
+            "Rotini"
+          ]
+        },
+        {
+          "canonical": "Farfalle",
+          "aliases": [
+            "Bow-tie pasta",
+            "Bow ties"
+          ]
+        },
+        {
+          "canonical": "Linguine",
+          "aliases": []
+        },
+        {
+          "canonical": "Fettuccine",
+          "aliases": [
+            "Fettuccini"
+          ]
+        },
+        {
+          "canonical": "Rigatoni",
+          "aliases": []
+        },
+        {
+          "canonical": "Ravioli",
+          "aliases": []
+        },
+        {
+          "canonical": "Lasagna",
+          "aliases": [
+            "Lasagne"
+          ]
+        },
+        {
+          "canonical": "Orzo",
+          "aliases": [
+            "Risoni"
+          ]
+        },
+        {
+          "canonical": "Conchiglie",
+          "aliases": [
+            "Shell pasta"
+          ]
+        },
+        {
+          "canonical": "Tagliatelle",
+          "aliases": []
+        },
+        {
+          "canonical": "Tortellini",
+          "aliases": []
+        },
+        {
+          "canonical": "Angel hair",
+          "aliases": [
+            "Capellini"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "weather_types",
+      "name": "Everyday Weather Conditions",
+      "description": "Common weather descriptions. This is a game vocabulary set, not a meteorological classification.",
+      "answers": [
+        {
+          "canonical": "Sunny",
+          "aliases": [
+            "Clear",
+            "Sunshine"
+          ]
+        },
+        {
+          "canonical": "Cloudy",
+          "aliases": [
+            "Overcast"
+          ]
+        },
+        {
+          "canonical": "Partly cloudy",
+          "aliases": [
+            "Partly sunny"
+          ]
+        },
+        {
+          "canonical": "Rainy",
+          "aliases": [
+            "Rain",
+            "Raining"
+          ]
+        },
+        {
+          "canonical": "Snowy",
+          "aliases": [
+            "Snow",
+            "Snowing"
+          ]
+        },
+        {
+          "canonical": "Windy",
+          "aliases": [
+            "Breezy"
+          ]
+        },
+        {
+          "canonical": "Foggy",
+          "aliases": [
+            "Misty",
+            "Fog"
+          ]
+        },
+        {
+          "canonical": "Stormy",
+          "aliases": [
+            "Storm",
+            "Thunderstorm"
+          ]
+        },
+        {
+          "canonical": "Hail",
+          "aliases": [
+            "Hailing"
+          ]
+        },
+        {
+          "canonical": "Humid",
+          "aliases": [
+            "Muggy"
+          ]
+        },
+        {
+          "canonical": "Hot",
+          "aliases": [
+            "Very warm"
+          ]
+        },
+        {
+          "canonical": "Cold",
+          "aliases": [
+            "Chilly"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "baking_ingredients",
+      "name": "Common Baking Ingredients",
+      "description": "Common standalone ingredients used in home baking.",
+      "answers": [
+        {
+          "canonical": "Flour",
+          "aliases": [
+            "All-purpose flour",
+            "Plain flour"
+          ]
+        },
+        {
+          "canonical": "Sugar",
+          "aliases": [
+            "Granulated sugar",
+            "White sugar"
+          ]
+        },
+        {
+          "canonical": "Brown sugar",
+          "aliases": [
+            "Light brown sugar",
+            "Dark brown sugar"
+          ]
+        },
+        {
+          "canonical": "Butter",
+          "aliases": []
+        },
+        {
+          "canonical": "Egg",
+          "aliases": [
+            "Eggs"
+          ]
+        },
+        {
+          "canonical": "Milk",
+          "aliases": []
+        },
+        {
+          "canonical": "Baking powder",
+          "aliases": []
+        },
+        {
+          "canonical": "Baking soda",
+          "aliases": [
+            "Bicarbonate of soda",
+            "Bicarb"
+          ]
+        },
+        {
+          "canonical": "Yeast",
+          "aliases": [
+            "Baker's yeast"
+          ]
+        },
+        {
+          "canonical": "Salt",
+          "aliases": []
+        },
+        {
+          "canonical": "Vanilla extract",
+          "aliases": [
+            "Vanilla"
+          ]
+        },
+        {
+          "canonical": "Cocoa powder",
+          "aliases": [
+            "Cacao powder"
+          ]
+        },
+        {
+          "canonical": "Chocolate chips",
+          "aliases": [
+            "Chocolate morsels"
+          ]
+        },
+        {
+          "canonical": "Honey",
+          "aliases": []
+        },
+        {
+          "canonical": "Cinnamon",
+          "aliases": []
+        },
+        {
+          "canonical": "Oats",
+          "aliases": [
+            "Rolled oats"
+          ]
+        }
+      ]
+    }
+  ]
+}

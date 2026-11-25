@@ -3,6 +3,7 @@ import type { Env } from '../../worker'
 import { CATEGORY_REVEAL_MS, WORD_SELECTION_MS, type DuelTiming } from '../game/timing'
 import { LOBBY_SEATS, ROOM_CODE_PATTERN, type LobbySeat } from '../schemas/lobby-schema'
 import { WORD_SELECTIONS, type WordSelection } from '../schemas/word-selection-schema'
+import { CATEGORIES, matchWord } from '../game/categories'
 
 export const SELECT_WORD_PATH = '/internal/one-lie/select-word'
 export const START_GAME_PATH = '/internal/one-lie/start-game'
@@ -78,9 +79,14 @@ export async function saveSelection(userId: string, params: Record<string, unkno
   if (Date.now() < host.data.startedAt + CATEGORY_REVEAL_MS) return { success: false, code: 'category_spinning', error: 'Wait for the category to land.' }
   if (ownSeat.data.ready === 1) return { success: false, code: 'already_selected', error: 'Your word is already locked in.' }
   const expired = Date.now() >= host.data.selectionEndsAt
-  const word = expired ? '' : typeof params.word === 'string' ? params.word.trim() : ''
+  let word = expired ? '' : typeof params.word === 'string' ? params.word.trim() : ''
   if (!expired && (!word || word.length > 40 || /[\u0000-\u001f]/.test(word))) return { success: false, code: 'invalid_word', error: 'Type a word of 1–40 characters.' }
 
+  if (!expired && CATEGORIES.some((category) => category.id === host.data.categoryId)) {
+    const match = matchWord(host.data.categoryId!, word)
+    if (!match.canonical) return { success: false, code: 'invalid_category_word', error: match.suggestion ? `Did you mean ${match.suggestion}? Confirm that word before submitting.` : 'Choose a word from this category’s accepted vocabulary.' }
+    word = match.canonical
+  }
   return commitSelection(userId, code, ownSeat.recordId, word, tools)
 }
 

@@ -206,3 +206,14 @@
 @media (prefers-reduced-motion: reduce) {
   .one-lie-lobby *, .one-lie-lobby *::before, .one-lie-lobby *::after { animation: none !important; transition: none !important; }
 }
+
+.lie-reveal { text-align:center; padding:24px 0; }
+.lie-reveal h2 { font: 2rem Georgia,serif; }
+.lie-reveal-card { padding:28px 20px; margin:16px 0; border:2px solid currentColor; border-radius:20px; animation:lie-reveal-enter .85s ease-out both; }
+.lie-reveal-card:nth-of-type(2) { animation-delay:.6s; }
+.lie-reveal-red { color:#a02d26; background:#ffe3db; box-shadow:0 12px 45px #b73e3226; }
+.lie-reveal-green { color:#285f39; background:#e1f2da; box-shadow:0 12px 45px #4a8a4926; }
+.lie-reveal-card span { font:bold 64px Georgia,serif; }
+.lie-reveal-card h3 { font:bold clamp(22px,3vw,34px) Georgia,serif; overflow-wrap:anywhere; }
+@keyframes lie-reveal-enter { from { opacity:0; transform:translateY(35px) scale(.85) rotate(-3deg); } to { opacity:1; transform:none; } }
+@media(prefers-reduced-motion:reduce) { .lie-reveal-card { animation:none; } }

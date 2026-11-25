@@ -1,13 +1,13 @@
 import { LockKeyhole, UserRound } from 'lucide-react'
 import type { LobbySeat } from '../schemas/lobby-schema'
 
-export default function DuelPlayer({ player, own, word, status, active, seconds, progress }: {
+export default function DuelPlayer({ player, own, word, status, active, seconds, progress, revealed }: {
   player: LobbySeat; own: boolean; word?: string; status: string
-  active?: boolean; seconds?: number | null; progress?: number
+  active?: boolean; seconds?: number | null; progress?: number; revealed?: boolean
 }) {
   return <section className={`duel-player duel-player-${player.seat === 1 ? 'left' : 'right'} ${active ? 'duel-player-active' : ''}`} data-testid={`duel-player-${player.seat}`} aria-label={own ? 'Your player' : 'Opponent'}>
-    <div className={`duel-secret ${own && word !== undefined ? 'duel-secret-revealed' : ''}`}>
-      {own && word !== undefined ? <span data-testid="own-secret-word">{word || 'Empty word'}</span> : <span data-testid={own ? 'own-word-placeholder' : 'opponent-secret'}>{own ? 'Your secret' : '?????'}</span>}
+    <div className={`duel-secret ${(own || revealed) && word !== undefined ? 'duel-secret-revealed' : ''}`}>
+      {(own || revealed) && word !== undefined ? <span data-testid={own ? 'own-secret-word' : 'revealed-opponent-word'}>{word || 'Empty word'}</span> : <span data-testid={own ? 'own-word-placeholder' : 'opponent-secret'}>{own ? 'Your secret' : '?????'}</span>}
       <LockKeyhole size={14} aria-hidden="true" />
     </div>
     <div className="duel-avatar-wrap">

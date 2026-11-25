@@ -2,16 +2,27 @@ import type { ActionResult } from 'deepspace/worker'
 import { forwardGameAction, type SelectionTools } from './selection'
 import { LOBBY_SEATS, ROOM_CODE_PATTERN, type LobbySeat } from '../schemas/lobby-schema'
 import { ANSWERS, PRIVATE_ANSWERS, QUESTION_TURNS, turnComplete, type Answer, type PrivateAnswer, type QuestionTurn } from '../schemas/question-schema'
+import { GUESS_ROUNDS, type GuessRound } from '../schemas/guess-schema'
 import { ANSWER_MS, QUESTION_MS } from '../game/timing'
 
 export const QUESTION_PATH = '/internal/one-lie/question'
 export const DECLARE_PATH = '/internal/one-lie/declare'
 export const ANSWER_PATH = '/internal/one-lie/answer'
 export const SYNC_QA_PATH = '/internal/one-lie/sync-questions'
-export const askQuestion = forwardGameAction(QUESTION_PATH)
-export const declareTruth = forwardGameAction(DECLARE_PATH)
+// QUESTION_PATH and DECLARE_PATH are internal record operations. Public
+// question submission is the AI pipeline in ai-questions.ts; clients cannot
+// invoke a manual truth declaration through the actions registry.
 export const submitAnswer = forwardGameAction(ANSWER_PATH)
 export const syncQuestions = forwardGameAction(SYNC_QA_PATH)
+
+export async function questionCycle(code: string, tools: SelectionTools, now = Date.now()) {
+  const result = await tools.query<GuessRound>(GUESS_ROUNDS, { where: { code }, orderBy: 'round', orderDir: 'desc', limit: 1 })
+  if (!result.success) throw new Error('Could not load the round.')
+  const latest = result.data.records[0]?.data
+  const offset = latest?.status === 'missed' ? latest.round * 6 : Math.max(0, (latest?.round ?? 1) - 1) * 6
+  const blocked = !!latest && (latest.status !== 'missed' || (latest.revealEndsAt ?? 0) > now)
+  return { offset, blocked }
+}
 
 const refused = (code: string, error: string): ActionResult => ({ success: false, code, error })
 const isAnswer = (value: unknown): value is Answer => ANSWERS.includes(value as Answer)
@@ -24,10 +35,12 @@ export async function advanceQuestions(code: string, toolsFor: (userId: string) 
   if (!room.success) throw new Error('Could not load question timer room.')
   const seats = room.data.records.map((r) => r.data).sort((a, b) => a.seat - b.seat)
   if (seats.length !== 2 || seats[0].status === 'closed' || !seats[0].startedAt || !seats.every((s) => s.ready === 1)) return null
-  const history = await tools.query<QuestionTurn>(QUESTION_TURNS, { where: { code }, orderBy: 'turn', orderDir: 'asc', limit: 6 })
+  const cycle = await questionCycle(code, tools, now)
+  if (cycle.blocked) return null
+  const history = await tools.query<QuestionTurn>(QUESTION_TURNS, { where: { code }, orderBy: 'turn', orderDir: 'desc', limit: 6 })
   if (!history.success) throw new Error('Could not load question timer state.')
-  const turn = history.data.records.filter((r) => turnComplete(r.data)).length + 1
-  if (turn > 6) return null
+  const turn = cycle.offset + history.data.records.filter((r) => r.data.turn > cycle.offset && turnComplete(r.data)).length + 1
+  if (turn > cycle.offset + 6) return null
   const current = history.data.records.find((r) => r.data.turn === turn)
   if (!current) {
     const deadline = now + QUESTION_MS
@@ -45,7 +58,7 @@ export async function advanceQuestions(code: string, toolsFor: (userId: string) 
   if (current.data.question) {
     // No guessed truth: only an existing private declaration may be sent.
     const ownTools = toolsFor(current.data.answererId)
-    const rows = await ownTools.query<PrivateAnswer>(PRIVATE_ANSWERS, { where: { code, playerId: current.data.answererId }, limit: 3 })
+    const rows = await ownTools.query<PrivateAnswer>(PRIVATE_ANSWERS, { where: { code, playerId: current.data.answererId, turn }, limit: 1 })
     if (!rows.success) throw new Error('Could not load timeout declaration.')
     const declaration = rows.data.records.find((r) => r.data.turn === turn)
     if (declaration) {
@@ -82,12 +95,13 @@ export async function questionAction(path: string, userId: string, params: Recor
   if (!seats.some((s) => s.playerId === userId)) return refused('not_seated', 'Only seated players can play.')
   if (seats[0]?.status === 'closed') return refused('room_closed', 'This room has closed.')
   if (seats.length !== 2 || !seats[0].startedAt || !seats.every((s) => s.ready === 1)) return refused('not_ready', 'Both words must be locked in first.')
-  const queried = await tools.query<QuestionTurn>(QUESTION_TURNS, { where: { code }, orderBy: 'turn', orderDir: 'asc', limit: 6 })
+  const cycle = await questionCycle(code, tools)
+  const queried = await tools.query<QuestionTurn>(QUESTION_TURNS, { where: { code }, orderBy: 'turn', orderDir: 'desc', limit: 6 })
   if (!queried.success) return refused('read_failed', 'Could not load the conversation.')
   const turns = queried.data.records
-  const turn = turns.filter((r) => turnComplete(r.data)).length + 1
+  const turn = cycle.offset + turns.filter((r) => r.data.turn > cycle.offset && turnComplete(r.data)).length + 1
   if (path === SYNC_QA_PATH) return { success: true, data: { synced: true } }
-  if (turn > 6) return refused('awaiting_guesses', 'Awaiting guesses.')
+  if (cycle.blocked || turn > cycle.offset + 6) return refused('awaiting_guesses', 'Awaiting guesses.')
   if (params.turn !== turn) return refused('stale_turn', 'This turn has already moved on. Your screen will update.')
   const askerId = seats[(turn - 1) % 2].playerId
   const answererId = seats[turn % 2].playerId
@@ -105,7 +119,7 @@ export async function questionAction(path: string, userId: string, params: Recor
   }
   if (userId !== answererId) return refused('wrong_role', 'Only the answering player can answer.')
   if (!current?.data.question) return refused('no_question', 'Wait for a question first.')
-  const privateRows = await tools.query<PrivateAnswer>(PRIVATE_ANSWERS, { where: { code, playerId: userId }, limit: 3 })
+  const privateRows = await tools.query<PrivateAnswer>(PRIVATE_ANSWERS, { where: { code, playerId: userId, turn }, limit: 1 })
   if (!privateRows.success) return refused('read_failed', 'Could not load your private answer state.')
   const declaration = privateRows.data.records.find((r) => r.data.turn === turn)
   if (path === DECLARE_PATH) {
@@ -120,7 +134,9 @@ export async function questionAction(path: string, userId: string, params: Recor
   // may publish ONLY that same decision; they cannot reset or spend twice.
   if (declaration.data.sentAnswer && declaration.data.sentAnswer !== params.answer) return refused('already_answered', 'Your submitted answer cannot change.')
   const spentLie = params.answer !== declaration.data.truth ? 1 : 0
-  if (spentLie && privateRows.data.records.some((r) => r.data.turn !== turn && r.data.spentLie === 1)) return refused('lie_used', 'Your Lie token has already been used. Send your declared truth.')
+  const used = await tools.query<PrivateAnswer>(PRIVATE_ANSWERS, { where: { code, playerId: userId, spentLie: 1 }, limit: 1 })
+  if (!used.success) return refused('read_failed', 'Could not load your Lie token.')
+  if (spentLie && used.data.records.some((r) => r.data.turn !== turn)) return refused('lie_used', 'Your Lie token has already been used. Send your declared truth.')
   if (!declaration.data.sentAnswer) {
     const reserved = await tools.update<PrivateAnswer>(PRIVATE_ANSWERS, declaration.recordId, { sentAnswer: params.answer, spentLie })
     if (!reserved.success) return refused('save_failed', 'Could not save your answer. Please retry.')

@@ -4,7 +4,7 @@ export const QUESTION_TURNS = 'question_turns'
 export const PRIVATE_ANSWERS = 'private_answers'
 export const ANSWERS = ['Yes', 'Depends', 'No'] as const
 export type Answer = typeof ANSWERS[number]
-export type QuestionTurn = { code: string; turn: number; askerId: string; answererId: string; question: string; answer?: Answer; status?: 'asking' | 'answering' | 'answered' | 'skipped'; phaseEndsAt?: number }
+export type QuestionTurn = { code: string; turn: number; askerId: string; answererId: string; question: string; answer?: Answer; status?: 'asking' | 'checking' | 'answering' | 'answered' | 'skipped'; phaseEndsAt?: number; disclosedLie?: number }
 export const turnComplete = (turn: QuestionTurn) => !!turn.answer || turn.status === 'skipped'
 export type PrivateAnswer = { code: string; turn: number; playerId: string; truth: Answer; sentAnswer?: Answer; spentLie?: number }
 
@@ -25,6 +25,7 @@ export const questionTurnsSchema: CollectionSchema = {
     { name: 'answer', storage: 'text', interpretation: 'plain' },
     { name: 'status', storage: 'text', interpretation: 'plain' },
     { name: 'phaseEndsAt', storage: 'number', interpretation: 'plain' },
+    { name: 'disclosedLie', storage: 'number', interpretation: 'plain' },
   ],
   uniqueOn: ['code', 'turn'],
   permissions: { '*': denied, viewer: denied, member: shared, admin: shared },

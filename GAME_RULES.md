@@ -6,7 +6,13 @@ These are the developer's target gameplay rules for the two-player One Lie game.
 
 Each player has one Lie token. Both players receive the same category and have **15 seconds** to enter their own secret word.
 
-AI auto-completes the word, fixes typos, and "de-complicates" it, then verifies that it belongs to the category. Each player's selected word stays private from the opponent.
+**Approved scope decision (clarified November 25):** Secret-word entry uses the curated `categories.json` catalog. This replaces the original proposal for AI completion, typo correction, simplification, and category verification; those AI features are not outstanding requirements for secret entry.
+
+Players type a canonical word or known alias from the selected category. Deterministic matching converts accepted aliases to their canonical word. Close spellings can produce a suggestion, which the player must explicitly confirm. The server verifies category membership against the catalog. Each player's selected word stays private from the opponent.
+
+This decision applies to new rooms using curated categories. Existing rooms with older category IDs retain their free-text behavior. Browser tests for new rooms must choose valid category words or aliases; arbitrary phrases should be tested as rejected input.
+
+AI remains in scope for question validation, private truthful answers, and strict guess-alias comparison. Question suggestions have been removed. Secret-entry spelling suggestions do not imply typo tolerance when judging a guess.
 
 ## Questions and answers
 
@@ -24,27 +30,31 @@ For a definite answer, the player chooses **Honest** to send the correct answer 
 
 ## Guessing and lie disclosure
 
-After **three rounds**, each containing one asking turn per player, the game enters **Awaiting guesses**. Timed-out turns consume their slot. The target guessing phase will let players guess; the first player to guess the opponent's secret word correctly wins.
+Each guessing round follows three Q&A turns per player. Each player has 30 seconds to submit one guess. If neither is correct, show only the opponent's animated lie reveal for 6.5 seconds, keep the words private, then begin another three Q&A turns per player and another guessing round. There is no round limit. The match ends only on a correct guess (simultaneous correct guesses tie). Lie tokens never reset. Provider errors continue to another Q&A cycle without declaring a winner.
 
-If neither player guesses correctly, the game tells each opponent whether the answering player used their Lie token in that round.
+After each guessing round where both players are wrong, disclose whether each player used their Lie token during the Q&A. Each player has only one token for the entire match. The AI truth remains private.
 
-## Details to clarify before implementation
+## Guess judging
 
-- Whether guesses are simultaneous or ordered, and how simultaneous correct guesses are resolved.
-- Whether "used in that round" refers to a particular question round or the entire three-round sequence, and what happens after the disclosure if neither player has won.
+Exact canonical words and aliases are checked without AI. Unlisted aliases receive one strict small-model identity comparison. Only established names for exactly the same thing count. Typos, partial words, descriptions, broader/narrower concepts, related items, alternatives and uncertain matches fail. Exact catalog aliases are authoritative. Pending judgments have a server deadline; provider failure shows an error and continues to another Q&A cycle without a winner.
 
-Keep these points unresolved until the developer specifies them; do not invent rules for them.
+Submitted guesses are private and immutable. The public result and words appear only at match end.
 
 ## Current implementation and deferred work
 
+### Implemented behavior and remaining differences
+
+- New rooms use the canonical answers and aliases in `categories.json`. Unambiguous spelling corrections are suggestions requiring confirmation. The server accepts only exact canonical words or aliases for these categories. Existing rooms with older category IDs keep their original free-text rules. Empty word timeout behavior is unchanged for now.
+- Per-round lie disclosures and repeating timed guessing rounds are implemented.
+- AI guess comparison uses `gpt-5.4-nano`, limits responses to 160 tokens, and does not automatically retry or upgrade. A live check found the originally selected `gpt-4.1-nano` retired. AI question validation and private truth determination are connected. There is no fixed validation-attempt limit; players may revise and resubmit while the original asking deadline permits. Only one validation request can be pending at a time, and rejected checks do not reset that deadline. Question suggestions have been removed. Validation receives the secret only on the server.
+
 - The current word-selection timer is **20 seconds**. The target rule above specifies **15 seconds**; this reference update does not change the timer.
-- Word entry currently trusts players. AI suggestions, completion, typo correction, simplification, and category validation are deferred until requested.
+- Catalog-based secret entry is the approved replacement for the original AI-assisted entry proposal, as described above.
 - A submitted word is permanent. At the deadline, a player who has not submitted receives an empty word; AI handling for that is deferred.
 - Only the host starts the duel after both players have joined. Either player may exit at any stage, closing the room for both.
-- The manual Q&A milestone has the host ask first, alternating for three rounds (one asking turn per player per round), then stops at “Awaiting guesses.”
-- The UI shows three rounds; each round gives both players one asking turn. Question entry is limited to 30 seconds, and answering (including the temporary manual truthful declaration) to 15 seconds. A green countdown ring surrounds the active player's icon. Deadlines are set and enforced on the server and survive refresh.
-- An expired question is skipped. On answer expiry, send the existing truthful declaration without spending a token; with no declaration, skip the answer. A reserved submission whose public write failed is recovered using the same saved decision. Skipped turns consume their slot in the three rounds.
-- AI will determine the truthful answer in a later milestone. The manual declaration is a temporary replacement; this milestone adds no AI or integrations.
-- The answering player privately declares Yes, Depends, or No. Sending that declaration preserves their token; any different answer spends it. Once spent, only the declared truth can be sent. Declarations are final for that question. AI validation and truth checking remain deferred.
-- Truth declarations, individual lie flags, and token state stay private to their owner during the match. Shared history contains only questions and submitted answers.
-- Guessing and lie disclosure are not implemented yet.
+- The host asks first, alternating for three turns per player, followed by guessing.
+- The UI shows Turn 1/3 through Turn 3/3 for each player. Question entry is limited to 30 seconds, and answering to 15 seconds. A green countdown ring surrounds the active player's icon. Deadlines are set and enforced on the server and survive refresh.
+- An expired question is skipped. Validation has a separate maximum 20-second wait. Rejection returns to the original asking deadline; acceptance starts a full 15-second answer window. On answer expiry, send the saved AI truth without spending a token; with no truth, skip the answer. A reserved submission whose public write failed is recovered using the same saved decision. Skipped turns consume their slot in their three turns.
+- AI determines the private truthful answer. Manual truth declaration is no longer a public action. Empty secrets and uncertain or context-dependent facts use Depends.
+- The answering player sees the AI Yes/Depends/No privately. Sending that answer preserves their token; any different answer spends it. Once spent, only the AI truth can be sent. This keeps the existing three-choice Lie-token behavior.
+- Truth declarations stay private. Lie usage becomes public only after both guesses are wrong.

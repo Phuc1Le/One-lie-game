@@ -13,6 +13,8 @@ import { settingsSchema } from './schemas/admin-schema'
 import { lobbySeatsSchema } from './schemas/lobby-schema'
 import { wordSelectionsSchema } from './schemas/word-selection-schema'
 import { questionTurnsSchema, privateAnswersSchema } from './schemas/question-schema'
+import { questionRequestsSchema } from './schemas/question-request-schema'
+import { guessRoundsSchema, privateGuessesSchema } from './schemas/guess-schema'
 
 export const schemas: CollectionSchema[] = [
   usersSchema,
@@ -20,5 +22,8 @@ export const schemas: CollectionSchema[] = [
   lobbySeatsSchema,
   wordSelectionsSchema,
   questionTurnsSchema,
+  questionRequestsSchema,
   privateAnswersSchema,
+  guessRoundsSchema,
+  privateGuessesSchema,
 ]

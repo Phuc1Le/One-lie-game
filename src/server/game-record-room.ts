@@ -1,3 +1,4 @@
+import { AI_PATHS, aiQuestionAction } from '../actions/ai-questions'
 import { RecordRoom } from 'deepspace/worker'
 import type { ActionResult } from 'deepspace/worker'
 import type { Env } from '../../worker'
@@ -5,13 +6,14 @@ import { beginDuel, expireSelections, readDuelTiming, saveSelection, DUEL_TIMING
 import { closeRoom } from '../actions/close-room'
 import { LOBBY_SEATS, ROOM_CODE_PATTERN, type LobbySeat } from '../schemas/lobby-schema'
 import { ANSWER_PATH, DECLARE_PATH, QUESTION_PATH, SYNC_QA_PATH, advanceQuestions, questionAction } from '../actions/questions'
+import { GUESS_SYNC_PATH, GUESS_RESERVE_PATH, GUESS_FINISH_PATH, advanceGuesses, guessAction } from '../actions/guesses'
 
 // Keep the SDK's records, SQLite persistence and permission-filtered broadcasts.
 // Serialize word selection, room exit, and Q&A decisions across all requests.
 export class GameRecordRoom extends RecordRoom<Env> {
   async fetch(request: Request): Promise<Response> {
     const path = new URL(request.url).pathname
-    if (![SELECT_WORD_PATH, START_GAME_PATH, EXIT_ROOM_PATH, DUEL_TIMING_PATH, QUESTION_PATH, DECLARE_PATH, ANSWER_PATH, SYNC_QA_PATH].includes(path)) return super.fetch(request)
+    if (![...AI_PATHS, SELECT_WORD_PATH, START_GAME_PATH, EXIT_ROOM_PATH, DUEL_TIMING_PATH, QUESTION_PATH, DECLARE_PATH, ANSWER_PATH, SYNC_QA_PATH, GUESS_SYNC_PATH, GUESS_RESERVE_PATH, GUESS_FINISH_PATH].includes(path)) return super.fetch(request)
     const userId = request.headers.get('X-User-Id')
     // This endpoint is reached by a server-side DO stub, not a public route.
     if (request.method !== 'POST' || request.headers.get('X-App-Action') !== 'true' || !userId) {
@@ -20,6 +22,20 @@ export class GameRecordRoom extends RecordRoom<Env> {
     const params = await request.json<Record<string, unknown>>()
     return this.state.blockConcurrencyWhile(async () => {
       const tools = this.toolsFor(userId)
+      if (AI_PATHS.includes(path)) {
+        const code = typeof params.code === 'string' ? params.code.trim().toUpperCase() : ''
+        if (ROOM_CODE_PATTERN.test(code)) await this.refreshQuestions(code)
+        const result = await aiQuestionAction(path, userId, params, tools, (id) => this.toolsFor(id))
+        if (ROOM_CODE_PATTERN.test(code)) await this.refreshQuestions(code)
+        return Response.json(result)
+      }
+      if ([GUESS_SYNC_PATH, GUESS_RESERVE_PATH, GUESS_FINISH_PATH].includes(path)) {
+        const code = typeof params.code === 'string' ? params.code.trim().toUpperCase() : ''
+        if (ROOM_CODE_PATTERN.test(code)) await this.refreshGuesses(code)
+        const result = await guessAction(path, userId, params, tools)
+        if (ROOM_CODE_PATTERN.test(code)) await this.refreshGuesses(code)
+        return Response.json(result)
+      }
       if ([QUESTION_PATH, DECLARE_PATH, ANSWER_PATH, SYNC_QA_PATH].includes(path)) {
         const code = typeof params.code === 'string' ? params.code.trim().toUpperCase() : ''
         if (ROOM_CODE_PATTERN.test(code)) await this.refreshQuestions(code)
@@ -64,7 +80,8 @@ export class GameRecordRoom extends RecordRoom<Env> {
           await expireSelections(code, (userId) => this.toolsFor(userId))
           await this.state.storage.delete(key)
           await this.refreshQuestions(code)
-        } else await this.refreshQuestions(key.slice(3))
+        } else if (key.startsWith('guess:')) await this.refreshGuesses(key.slice(6))
+        else await this.refreshQuestions(key.slice(3))
       }
       await this.scheduleNextDeadline()
     })
@@ -79,19 +96,31 @@ export class GameRecordRoom extends RecordRoom<Env> {
   private async clearDeadline(code: string) {
     await this.state.storage.delete(`duel:${code}`)
     await this.state.storage.delete(`qa:${code}`)
+    await this.state.storage.delete(`guess:${code}`)
     await this.scheduleNextDeadline()
   }
 
   private async deadlines() {
     const words = await this.state.storage.list<number>({ prefix: 'duel:' })
     const questions = await this.state.storage.list<number>({ prefix: 'qa:' })
-    return new Map([...words, ...questions])
+    const guesses = await this.state.storage.list<number>({ prefix: 'guess:' })
+    return new Map([...words, ...questions, ...guesses])
   }
 
   private async refreshQuestions(code: string) {
     const deadline = await advanceQuestions(code, (userId) => this.toolsFor(userId))
     if (deadline === null) await this.state.storage.delete(`qa:${code}`)
     else await this.state.storage.put(`qa:${code}`, deadline)
+    await this.refreshGuesses(code)
+  }
+
+  private async refreshGuesses(code: string) {
+    const deadline = await advanceGuesses(code, (userId) => this.toolsFor(userId))
+    if (deadline === null) await this.state.storage.delete(`guess:${code}`)
+    else await this.state.storage.put(`guess:${code}`, deadline)
+    const questionDeadline = await advanceQuestions(code, (userId) => this.toolsFor(userId))
+    if (questionDeadline === null) await this.state.storage.delete(`qa:${code}`)
+    else await this.state.storage.put(`qa:${code}`, questionDeadline)
     await this.scheduleNextDeadline()
   }
 

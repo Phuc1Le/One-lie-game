@@ -7,6 +7,219 @@ import { SELECT_WORD_PATH, START_GAME_PATH, EXIT_ROOM_PATH, DUEL_TIMING_PATH } f
 import { CATEGORY_REVEAL_MS, WORD_SELECTION_MS } from './src/game/timing'
 import { ANSWER_PATH, DECLARE_PATH, QUESTION_PATH, SYNC_QA_PATH, questionAction } from './src/actions/questions'
 import { PRIVATE_ANSWERS, QUESTION_TURNS } from './src/schemas/question-schema'
+import { GUESS_RESERVE_PATH, GUESS_FINISH_PATH, GUESS_SYNC_PATH, submitGuess } from './src/actions/guesses'
+import { GUESS_ROUNDS, PRIVATE_GUESSES } from './src/schemas/guess-schema'
+import { askAIQuestion, AI_RESERVE, AI_FINISH } from './src/actions/ai-questions'
+import { QUESTION_REQUESTS } from './src/schemas/question-request-schema'
+
+function aiContext(code: string, userId: string, params: Record<string, unknown>, integration: (endpoint: string, body: any) => Promise<any>) {
+  return { userId, params: { code, turn: 1, ...params },
+    env: { DEEPSPACE_APP_ID: 'test', RECORD_ROOMS: { idFromName: () => 'test', get: () => ({ fetch: async (request: Request) => runtime.dispatchFetch(request.url, { method: request.method, headers: Object.fromEntries(request.headers), body: await request.text() }) }) } },
+    tools: { integration },
+  } as any
+}
+const modelReply = (decision: unknown) => ({ success: true, data: { choices: [{ message: { content: JSON.stringify(decision) } }] } })
+
+describe('server AI questions', { timeout: 20_000 }, () => {
+  it('reserves once, hides the secret and AI truth from asker, and gives a full answering window', async () => {
+    const code = 'AIAA'
+    // Codes cannot contain I.
+    const roomCode = code.replaceAll('I', 'J')
+    await readyQA(roomCode)
+    const askerFrames = await subscribe('alice', roomCode, [QUESTION_TURNS, PRIVATE_ANSWERS, QUESTION_REQUESTS])
+    let calls = 0
+    const context = aiContext(roomCode, 'alice', { question: 'Does it use a ball?', truth: 'No' }, async (_endpoint, body) => {
+      calls++
+      expect(body.model).toBe('gpt-5.4-nano')
+      expect(body.messages[1].content).toContain('tennis')
+      return modelReply({ valid: true, reason: 'ok', truth: 'Yes' })
+    })
+    const results = await Promise.all([askAIQuestion(context), askAIQuestion(context)])
+    expect(calls).toBe(1)
+    expect(results.filter((r) => r.success)).toEqual([{ success: true, data: { accepted: true } }])
+    expect(JSON.stringify(results)).not.toContain('tennis')
+    expect(JSON.stringify(results)).not.toContain('truth')
+    const own = await tool('bob', 'records.query', { collection: PRIVATE_ANSWERS, where: { code: roomCode } })
+    expect(own.data.records[0].data).toMatchObject({ playerId: 'bob', truth: 'Yes' })
+    expect((await tool('alice', 'records.query', { collection: PRIVATE_ANSWERS, where: { code: roomCode } })).data.records).toHaveLength(0)
+    expect(askerFrames.filter((f) => f.type === 'core.record_change' && f.payload.collection === PRIVATE_ANSWERS)).toHaveLength(0)
+    const turn = (await tool('alice', 'records.query', { collection: QUESTION_TURNS, where: { code: roomCode, turn: 1 } })).data.records[0].data
+    expect(turn.phaseEndsAt - Date.now()).toBeGreaterThan(13_000)
+    expect((await qa('bob', ANSWER_PATH, roomCode, 1, { answer: 'No' })).success).toBe(true)
+    expect((await tool('bob', 'records.query', { collection: PRIVATE_ANSWERS, where: { code: roomCode } })).data.records[0].data.spentLie).toBe(1)
+  })
+
+  it('allows more than three checks while time remains and never accepts client truth', async () => {
+    const code = 'AJAB'
+    await readyQA(code)
+    let calls = 0
+    const context = aiContext(code, 'alice', { question: 'Is it tennis?', truth: 'Yes', decision: { valid: true, truth: 'Yes' } }, async () => {
+      calls++
+      return modelReply({ valid: false, reason: 'direct_guess', truth: 'Depends' })
+    })
+    for (let i = 0; i < 5; i++) expect(await askAIQuestion(context)).toMatchObject({ success: false, code: 'question_rejected' })
+    expect(calls).toBe(5)
+    expect((await tool('bob', 'records.query', { collection: PRIVATE_ANSWERS, where: { code } })).data.records).toHaveLength(0)
+    const request = (await tool('alice', 'records.query', { collection: QUESTION_REQUESTS, where: { code } })).data.records[0].data
+    expect(request.error).toContain('Do not ask')
+    expect((await tool('bob', 'records.query', { collection: QUESTION_REQUESTS, where: { code } })).data.records).toHaveLength(0)
+    expect(await askAIQuestion({ ...context, userId: 'charlie' })).toMatchObject({ success: false, code: 'not_seated' })
+    expect(await askAIQuestion({ ...context, userId: 'bob' })).toMatchObject({ success: false, code: 'wrong_role' })
+    expect(calls).toBe(5)
+  })
+
+  it('allows exit while checking and refuses late AI results', async () => {
+    const code = 'AJAD'
+    await readyQA(code)
+    const reserved = await qa('alice', AI_RESERVE, code, 1, { question: 'Does it use a ball?' })
+    expect(reserved.success).toBe(true)
+    expect((await qa('bob', EXIT_ROOM_PATH, code, 1)).success).toBe(true)
+    expect(await qa('alice', AI_FINISH, code, 1, { attempt: 1, decision: { valid: true, reason: 'ok', truth: 'Yes' } })).toMatchObject({ success: false, code: 'room_closed' })
+  })
+
+  it('skips a lost AI request on its server deadline and refuses the late truth', async () => {
+    const code = 'AJAE'
+    await readyQA(code)
+    await qa('alice', AI_RESERVE, code, 1, { question: 'Does it use a ball?' })
+    await tool('alice', 'records.update', { collection: QUESTION_TURNS, recordId: `question:${code}:1`, data: { phaseEndsAt: Date.now() + 150 } }, true)
+    await qa('alice', SYNC_QA_PATH, code, 1)
+    await expect.poll(async () => (await tool('alice', 'records.query', { collection: QUESTION_TURNS, where: { code, turn: 1 } })).data.records[0].data.status).toBe('skipped')
+    expect(await qa('alice', AI_FINISH, code, 1, { attempt: 1, decision: { valid: true, reason: 'ok', truth: 'Yes' } })).toMatchObject({ success: false, code: 'stale_turn' })
+    expect((await tool('bob', 'records.query', { collection: PRIVATE_ANSWERS, where: { code } })).data.records).toHaveLength(0)
+  })
+
+  it('recovers provider failure without extending asking time, then auto-sends AI Depends on answer timeout', async () => {
+    const code = 'AJAF'
+    await readyQA(code)
+    const deadline = (await tool('alice', 'records.query', { collection: QUESTION_TURNS, where: { code, turn: 1 } })).data.records[0].data.phaseEndsAt
+    const context = aiContext(code, 'alice', { question: 'Is it played indoors?' }, async () => { throw new Error('Provider unavailable') })
+    expect(await askAIQuestion(context)).toMatchObject({ success: false, code: 'question_rejected' })
+    expect((await tool('alice', 'records.query', { collection: QUESTION_TURNS, where: { code, turn: 1 } })).data.records[0].data.phaseEndsAt).toBe(deadline)
+    context.tools.integration = async () => modelReply({ valid: true, reason: 'ok', truth: 'Depends' })
+    expect((await askAIQuestion(context)).success).toBe(true)
+    await tool('alice', 'records.update', { collection: QUESTION_TURNS, recordId: `question:${code}:1`, data: { phaseEndsAt: Date.now() + 150 } }, true)
+    await qa('alice', SYNC_QA_PATH, code, 1)
+    await expect.poll(async () => (await tool('alice', 'records.query', { collection: QUESTION_TURNS, where: { code, turn: 1 } })).data.records[0].data.answer).toBe('Depends')
+    expect((await tool('bob', 'records.query', { collection: PRIVATE_ANSWERS, where: { code } })).data.records[0].data.spentLie).toBe(0)
+  })
+})
+
+async function readyGuesses(code: string) {
+  await readyQA(code)
+  for (let turn = 1; turn <= 6; turn++) {
+    const asker = turn % 2 ? 'alice' : 'bob'
+    const answerer = turn % 2 ? 'bob' : 'alice'
+    expect((await qa(asker, QUESTION_PATH, code, turn, { question: 'Is it a sport?' })).success).toBe(true)
+    await qa(answerer, DECLARE_PATH, code, turn, { truth: 'Yes' })
+    expect((await qa(answerer, ANSWER_PATH, code, turn, { answer: 'Yes' })).success).toBe(true)
+  }
+}
+const guessRows = async (code: string) => (await tool('alice', 'records.query', { collection: GUESS_ROUNDS, where: { code }, orderBy: 'round', orderDir: 'asc' })).data.records as any[]
+const guess = (user: string, code: string, round: number, word: string) => qa(user, GUESS_RESERVE_PATH, code, 0, { round, guess: word })
+
+describe('private guessing and match results', { timeout: 20_000 }, () => {
+  it('keeps semantic judge work off the public response and bills only one call for duplicate submissions', async () => {
+    const code = 'BELL'
+    await readyGuesses(code)
+    let calls = 0
+    const context = {
+      userId: 'alice', params: { code, round: 1, guess: 'tenniss', matches: true },
+      env: { DEEPSPACE_APP_ID: 'test', RECORD_ROOMS: { idFromName: () => 'test', get: () => ({ fetch: async (request: Request) => runtime.dispatchFetch(request.url, { method: request.method, headers: Object.fromEntries(request.headers), body: await request.text() }) }) } },
+      tools: { integration: async (_endpoint: string, body: any) => {
+        calls++
+        expect(body.model).toBe('gpt-5.4-nano')
+        expect(body.max_tokens).toBe(160)
+        return { success: true, data: { choices: [{ message: { content: '{"relation":"alias","canonical":"tennis"}' } }] } }
+      } },
+    } as any
+    const results = await Promise.all([submitGuess(context), submitGuess(context)])
+    expect(calls).toBe(1)
+    expect(results.filter((r) => r.success)).toEqual([{ success: true, data: { saved: true } }])
+    expect(JSON.stringify(results)).not.toContain('tennis')
+    await guess('bob', code, 1, 'football')
+    expect((await guessRows(code))[0].data.result).toBe('tie')
+  })
+
+  it('continues with an explicit judge error on a lost provider response and permits exit during guessing', async () => {
+    const validCode = 'FAEL'
+    await readyGuesses(validCode)
+    await guess('alice', validCode, 1, 'tenniss')
+    await guess('bob', validCode, 1, 'football')
+    await tool('alice', 'records.update', { collection: PRIVATE_GUESSES, recordId: `guess:${validCode}:1:alice`, data: { judgeEndsAt: Date.now() + 150 } }, true)
+    await qa('alice', GUESS_SYNC_PATH, validCode, 0)
+    await expect.poll(async () => (await guessRows(validCode))[0].data.result).toBe('judge_error')
+    expect((await guessRows(validCode))[0].data.status).toBe('missed')
+    expect((await guessRows(validCode))[0].data.word1).toBeFalsy()
+    await readyGuesses('EXGS')
+    expect((await qa('bob', EXIT_ROOM_PATH, 'EXGS', 0)).success).toBe(true)
+    expect(await guess('alice', 'EXGS', 1, 'tennis')).toMatchObject({ success: false, code: 'room_closed' })
+    const deadlines = await (await runtime.dispatchFetch('http://test/__test/deadlines')).json() as any
+    expect(deadlines.keys).not.toContain('guess:EXGS')
+  })
+  it('starts after six answers, survives sync, hides guesses, rejects outsiders and duplicates, and resolves a tie', async () => {
+    const code = 'GUES'
+    await readyGuesses(code)
+    const first = (await guessRows(code))[0].data
+    expect(first).toMatchObject({ round: 1, status: 'collecting', ready1: 0, ready2: 0 })
+    expect(first.endsAt - Date.now()).toBeGreaterThan(28_000)
+    await qa('alice', GUESS_SYNC_PATH, code, 0)
+    expect((await guessRows(code))[0].data.endsAt).toBe(first.endsAt)
+    expect(await guess('charlie', code, 1, 'tennis')).toMatchObject({ success: false, code: 'not_seated' })
+    const attempts = await Promise.all([guess('alice', code, 1, 'tennis'), guess('alice', code, 1, 'tennis')])
+    expect(attempts.filter((r) => r.success)).toHaveLength(1)
+    expect(attempts.find((r) => r.success).data).toEqual({ needsJudge: false, round: 1 })
+    expect((await guessRows(code))[0].data).toMatchObject({ ready1: 1, ready2: 0 })
+    expect((await guessRows(code))[0].data.word2).toBeFalsy()
+    expect((await tool('bob', 'records.query', { collection: PRIVATE_GUESSES, where: { code } })).data.records).toHaveLength(0)
+    expect((await tool('alice', 'records.update', { collection: PRIVATE_GUESSES, recordId: `guess:${code}:1:alice`, data: { matches: 1 } })).success).toBe(false)
+    await guess('bob', code, 1, 'football')
+    expect((await guessRows(code))[0].data).toMatchObject({ status: 'finished', result: 'tie', word1: 'football', word2: 'tennis' })
+    expect(await guess('bob', code, 1, 'football')).toMatchObject({ success: false, code: 'stale_round' })
+  })
+
+  it('repeats Q&A after missed guesses, preserves tokens and ends on a later correct guess', async () => {
+    const code = 'MESS'
+    await readyGuesses(code)
+    await tool('bob', 'records.update', { collection: PRIVATE_ANSWERS, recordId: 'truth:MESS:1', data: { spentLie: 1 } }, true)
+    const row = (await guessRows(code))[0]
+    await tool('alice', 'records.update', { collection: GUESS_ROUNDS, recordId: row.recordId, data: { endsAt: Date.now() + 150 } }, true)
+    await qa('alice', GUESS_SYNC_PATH, code, 0)
+    await expect.poll(async () => (await guessRows(code))[0].data.status).toBe('missed')
+    expect((await guessRows(code))[0].data.word1).toBeFalsy()
+    const history = await tool('alice', 'records.query', { collection: QUESTION_TURNS, where: { code } })
+    expect(history.data.records.find((r: any) => r.data.turn === 1).data.disclosedLie).toBe(1)
+    await tool('alice', 'records.update', { collection: GUESS_ROUNDS, recordId: row.recordId, data: { revealEndsAt: Date.now() + 150 } }, true)
+    await qa('alice', GUESS_SYNC_PATH, code, 0)
+    await expect.poll(async () => (await tool('alice', 'records.query', { collection: QUESTION_TURNS, where: { code, turn: 7 } })).data.records.length).toBe(1)
+    expect(await guess('alice', code, 1, 'tennis')).toMatchObject({ success: false, code: 'stale_round' })
+    for (let turn = 7; turn <= 12; turn++) {
+      const asker = turn % 2 ? 'alice' : 'bob'
+      const answerer = turn % 2 ? 'bob' : 'alice'
+      expect((await qa(asker, QUESTION_PATH, code, turn, { question: 'Another question?' })).success).toBe(true)
+      await qa(answerer, DECLARE_PATH, code, turn, { truth: 'Yes' })
+      if (answerer === 'bob') expect(await qa(answerer, ANSWER_PATH, code, turn, { answer: 'No' })).toMatchObject({ success: false, code: 'lie_used' })
+      expect((await qa(answerer, ANSWER_PATH, code, turn, { answer: 'Yes' })).success).toBe(true)
+    }
+    expect((await guessRows(code))[1].data.status).toBe('collecting')
+    await guess('alice', code, 2, 'tennis')
+    await guess('bob', code, 2, 'football')
+    expect((await guessRows(code))[1].data).toMatchObject({ status: 'finished', result: 'tie' })
+  })
+
+  it('reserves one semantic check, accepts only its private result, and declares a winner', async () => {
+    const code = 'JUDG'
+    await readyGuesses(code)
+    const reserved = await guess('alice', code, 1, 'tenniss')
+    expect(reserved.data).toMatchObject({ needsJudge: true, secret: 'tennis' })
+    expect(await guess('alice', code, 1, 'tenniss')).toMatchObject({ success: false, code: 'already_guessed' })
+    await guess('bob', code, 1, 'tennis') // Legacy free-text rooms also judge non-exact guesses.
+    await qa('bob', GUESS_FINISH_PATH, code, 0, { round: 1, matches: false })
+    expect((await guessRows(code))[0].data.status).toBe('judging')
+    expect(await qa('charlie', GUESS_FINISH_PATH, code, 0, { round: 1, matches: true })).toMatchObject({ success: false, code: 'not_seated' })
+    await qa('alice', GUESS_FINISH_PATH, code, 0, { round: 1, matches: true })
+    expect((await guessRows(code))[0].data).toMatchObject({ result: 'winner', winnerId: 'alice' })
+  })
+})
 
 // Exercise the actual SDK RecordRoom, SQLite, permission checks and WebSocket
 // frames in local workerd. No platform account or external service is needed.
@@ -101,11 +314,15 @@ describe('manual questions and private Lie tokens', { timeout: 20_000 }, () => {
     expect(await declare('bob', 1, 'No')).toMatchObject({ success: false, code: 'already_declared' })
     const duplicateAnswers = await Promise.all([answer('bob', 1, 'No'), answer('bob', 1, 'No')])
     expect(duplicateAnswers.filter((r) => r.success)).toHaveLength(1)
+    const undisclosed = await tool('alice', 'records.query', { collection: QUESTION_TURNS, where: { code } })
+    expect(undisclosed.data.records.find((r: any) => r.data.turn === 1).data.disclosedLie).toBeUndefined()
     expect(await ask('alice', 1)).toMatchObject({ success: false, code: 'stale_turn' })
     // Truthful Depends preserves Alice's token.
     expect((await ask('bob', 2)).success).toBe(true)
     expect((await declare('alice', 2, 'Depends')).success).toBe(true)
     expect((await answer('alice', 2, 'Depends')).success).toBe(true)
+    const disclosed = await tool('alice', 'records.query', { collection: QUESTION_TURNS, where: { code }, orderBy: 'turn', orderDir: 'asc' })
+    expect(disclosed.data.records.slice(0, 2).every((r: any) => r.data.disclosedLie == null)).toBe(true)
     expect((await ask('alice', 3)).success).toBe(true)
     expect((await declare('bob', 3, 'No')).success).toBe(true)
     expect(await answer('bob', 3, 'Yes')).toMatchObject({ success: false, code: 'lie_used' })
@@ -283,6 +500,16 @@ async function subscribe(userId: string, code: string, collections = [LOBBY_SEAT
 }
 
 describe('private selection in the actual DeepSpace RecordRoom', () => {
+  it('enforces curated category membership on the server and stores canonical aliases', async () => {
+    const code = 'PACK'
+    await seed(code)
+    expect((await tool('alice', 'records.update', { collection: LOBBY_SEATS, recordId: `${code}:alice`, data: { categoryId: 'planets' } }, true)).success).toBe(true)
+    expect(await select('alice', code, 'Banana')).toMatchObject({ success: false, code: 'invalid_category_word' })
+    expect(await select('alice', code, 'Jupitr')).toMatchObject({ success: false, code: 'invalid_category_word' })
+    expect((await select('alice', code, 'the Red Planet')).success).toBe(true)
+    expect((await ownSelections('alice', code)).data.records[0].data.word).toBe('Mars')
+  })
+
   it('gives both seated players server timing without changing the stored deadline', async () => {
     const code = 'SYNC'
     await seed(code)
