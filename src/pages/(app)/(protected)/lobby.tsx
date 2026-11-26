@@ -1,8 +1,8 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth, useQuery } from 'deepspace'
-import { UserRound, Plus } from 'lucide-react'
-import { Button, Input } from '@/components/ui'
+import { UserRound, Plus, CircleHelp } from 'lucide-react'
+import { Button, Input, Popover, PopoverTrigger, PopoverContent } from '@/components/ui'
 import { LOBBY_SEATS, ROOM_CODE_PATTERN, type LobbySeat } from '@/schemas/lobby-schema'
 import { requestRoomAction } from '@/lib/room-action'
 import WordSelectionPanel from '@/components/WordSelectionPanel'
@@ -82,7 +82,23 @@ function LobbyShell({ children, error }: { children: ReactNode; error?: string }
   return (
     <div className="one-lie-lobby min-h-full px-5 py-12 sm:py-20">
       <title>One Lie · Lobby</title>
-      <div className="mx-auto max-w-xl">
+      <div className="relative mx-auto max-w-xl">
+        <Popover>
+          <PopoverTrigger aria-label="How to play" className="absolute right-0 top-0 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground">
+            <CircleHelp size={19} aria-hidden="true" />
+          </PopoverTrigger>
+          <PopoverContent side="bottom" align="end" className="max-h-[min(70vh,420px)] w-[min(340px,calc(100vw-32px))] overflow-y-auto p-5 text-sm leading-relaxed">
+            <h2 className="font-serif text-xl text-foreground">How to play</h2>
+            <ol className="mt-3 list-decimal space-y-2 pl-5 text-muted-foreground">
+              <li>Share your room code with one friend. The host starts when both players join.</li>
+              <li>A category appears. You each have 20 seconds to lock in a secret word from that category.</li>
+              <li>Take turns asking questions about the other player’s word. You have 30 seconds to ask; don’t guess the word directly.</li>
+              <li>When answering, you have 15 seconds. Send the truthful Yes, No, or Depends answer, or spend your one Lie token to answer differently.</li>
+              <li>After three questions from each player, you each have 30 seconds to guess. A correct guess wins; if both are right, it’s a draw.</li>
+              <li>If both guesses are wrong, you’ll learn whether your opponent lied during those turns, then play another round.</li>
+            </ol>
+          </PopoverContent>
+        </Popover>
         <header className="mb-10 text-center">
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">A game for two</p>
           <h1 className="font-serif text-5xl tracking-tight sm:text-6xl">One Lie<span className="text-[#a75538]">.</span></h1>

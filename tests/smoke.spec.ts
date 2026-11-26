@@ -22,6 +22,15 @@ test('game entry preserves a shared room code', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Sign in to DeepSpace', exact: true })).toBeVisible()
 })
 
+test('lobby rules open from the help icon', async ({ page }) => {
+  await page.goto('/lobby')
+  await page.getByRole('button', { name: 'How to play' }).click()
+  await expect(page.getByRole('heading', { name: 'How to play' })).toBeVisible()
+  await expect(page.getByText('After three questions from each player', { exact: false })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('heading', { name: 'How to play' })).toHaveCount(0)
+})
+
 test('unknown route shows 404', async ({ page }) => {
   await page.goto('/nonexistent-page-xyz')
   await expect(page.getByText('404', { exact: true })).toBeVisible()
