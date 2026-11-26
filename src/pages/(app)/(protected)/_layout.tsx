@@ -14,7 +14,7 @@
  */
 
 import { useState } from 'react'
-import { Link, Outlet } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 import { AuthGate, AuthOverlay } from 'deepspace'
 import { Button } from '@/components/ui'
 
@@ -32,19 +32,13 @@ function SignedOutPanel() {
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-6 py-20">
       <div className="w-full max-w-sm rounded-lg border border-border bg-card p-8 text-center">
-        <h1 className="text-lg font-semibold text-foreground">Sign in to continue</h1>
+        <h1 className="text-lg font-semibold text-foreground">One Lie</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          This page is only available to signed-in users.
+          Two players. Two secrets. One lie. Sign in to create a room or join a friend.
         </p>
         <Button className="mt-6 w-full" onClick={() => setShowAuthModal(true)}>
           Sign in
         </Button>
-        <Link
-          to="/"
-          className="mt-4 inline-block text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-        >
-          Back to home
-        </Link>
       </div>
 
       {showAuthModal && <AuthOverlay onClose={() => setShowAuthModal(false)} />}

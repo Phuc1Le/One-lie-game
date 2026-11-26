@@ -134,9 +134,11 @@ export async function guessAction(path: string, userId: string, params: Record<s
   const category = roomCategory(code, host.categoryId)
   const matched = matchWord(category.id, guess)
   const canonical = matched.canonical
-  const exact = !!secret && normalizeWord(canonical ?? guess) === normalizeWord(secret)
-  // A spelling suggestion is not a winning guess. Reject obvious alternatives
-  // before AI; the model can only recognize an unlisted, exact-identity alias.
+  // The catalog accepts only a single unambiguous close spelling. It may
+  // correct a guess to the secret, but never to another category answer.
+  const exact = !!secret && normalizeWord(canonical ?? matched.suggestion ?? guess) === normalizeWord(secret)
+  // Reject obvious alternatives before AI; the model recognizes unlisted
+  // identity aliases, while the catalog handles conservative spelling fixes.
   const alternatives = /[,;/|\n]|\b(?:or|and)\b/i.test(guess)
   const needsJudge = !!secret && !exact && !canonical && !matched.suggestion && !alternatives
   await must(tools.create<PrivateGuess>(PRIVATE_GUESSES, { code, round: round.data.round, playerId: userId, guess, matches: exact ? 1 : 0, state: needsJudge ? 'pending' : 'done', judgeEndsAt: needsJudge ? Date.now() + 20_000 : 0 }, `guess:${code}:${round.data.round}:${userId}`))

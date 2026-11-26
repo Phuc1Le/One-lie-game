@@ -12,7 +12,7 @@ Players type a canonical word or known alias from the selected category. Determi
 
 This decision applies to new rooms using curated categories. Existing rooms with older category IDs retain their free-text behavior. Browser tests for new rooms must choose valid category words or aliases; arbitrary phrases should be tested as rejected input.
 
-AI remains in scope for question validation, private truthful answers, and strict guess-alias comparison. Question suggestions have been removed. Secret-entry spelling suggestions do not imply typo tolerance when judging a guess.
+AI remains in scope for question validation, private truthful answers, and strict guess-alias comparison. Question suggestions have been removed. During guessing, a single unambiguous close spelling from the selected category counts as its canonical word; ambiguous spellings do not.
 
 ## Questions and answers
 
@@ -36,7 +36,7 @@ After each guessing round where both players are wrong, disclose whether each pl
 
 ## Guess judging
 
-Exact canonical words and aliases are checked without AI. Unlisted aliases receive one strict small-model identity comparison. Only established names for exactly the same thing count. Typos, partial words, descriptions, broader/narrower concepts, related items, alternatives and uncertain matches fail. Exact catalog aliases are authoritative. Pending judgments have a server deadline; provider failure shows an error and continues to another Q&A cycle without a winner.
+Exact canonical words and aliases are checked without AI. A single unambiguous close spelling in the selected category also counts as its canonical word, so "blader" can match "Bladder"; ambiguous or distant spellings fail. Unlisted aliases receive one strict small-model identity comparison. Only established names for exactly the same thing count. Partial words, descriptions, broader/narrower concepts, related items, alternatives and uncertain matches fail. Exact catalog aliases are authoritative. Pending judgments have a server deadline; provider failure shows an error and continues to another Q&A cycle without a winner.
 
 Submitted guesses are private and immutable. The public result and words appear only at match end.
 
@@ -46,7 +46,7 @@ Submitted guesses are private and immutable. The public result and words appear 
 
 - New rooms use the canonical answers and aliases in `categories.json`. Unambiguous spelling corrections are suggestions requiring confirmation. The server accepts only exact canonical words or aliases for these categories. Existing rooms with older category IDs keep their original free-text rules. Empty word timeout behavior is unchanged for now.
 - Per-round lie disclosures and repeating timed guessing rounds are implemented.
-- AI guess comparison uses `gpt-5.4-nano`, limits responses to 160 tokens, and does not automatically retry or upgrade. A live check found the originally selected `gpt-4.1-nano` retired. AI question validation and private truth determination are connected. There is no fixed validation-attempt limit; players may revise and resubmit while the original asking deadline permits. Only one validation request can be pending at a time, and rejected checks do not reset that deadline. Question suggestions have been removed. Validation receives the secret only on the server.
+- AI guess comparison uses `gpt-5.4-nano`, limits responses to 160 tokens, and does not automatically retry or upgrade. A live check found the originally selected `gpt-4.1-nano` retired. AI question validation and private truth determination use `gpt-5.4-mini` with explicit comparison, possibility, and uncertainty instructions; guess-alias checks remain on nano. Both use one request, a 160-token output limit, and no automatic retries. Opt-in factual evaluations are in `game-judge.live.test.ts` (`ONE_LIE_LIVE_AI=1`); they make paid calls through the current DeepSpace CLI login. There is no fixed validation-attempt limit; players may revise and resubmit while the original asking deadline permits. Only one validation request can be pending at a time, and rejected checks do not reset that deadline. Question suggestions have been removed. Validation receives the secret only on the server.
 
 - The current word-selection timer is **20 seconds**. The target rule above specifies **15 seconds**; this reference update does not change the timer.
 - Catalog-based secret entry is the approved replacement for the original AI-assisted entry proposal, as described above.

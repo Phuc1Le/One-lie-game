@@ -1,6 +1,6 @@
 {
-  "schema_version": "1.0.0",
-  "title": "One Lie Game - Starter Category Pack",
+  "schema_version": "1.1.0",
+  "title": "One Lie Game - Category Pack",
   "language": "en",
   "normalization": {
     "canonical_matching": "case_insensitive",
@@ -12,7 +12,7 @@
       "enabled": true,
       "policy": "Suggest a canonical answer only when there is one unambiguous close match. Never silently map an ambiguous input."
     },
-    "alias_policy": "Aliases are accepted as exact equivalents of their canonical answer. Do not treat notes as aliases.",
+    "alias_policy": "Aliases are accepted as exact equivalents of their canonical answer. Category notes define intentional edge-case handling; notes are not aliases.",
     "ai_policy": "The AI may interpret and normalize a player's input, but the server must accept it only if the resulting canonical value exactly matches an answer in this category."
   },
   "categories": [
@@ -191,65 +191,6 @@
       ]
     },
     {
-      "id": "zodiac_signs",
-      "name": "Western Zodiac Signs",
-      "description": "The twelve signs of the tropical Western zodiac.",
-      "answers": [
-        {
-          "canonical": "Aries",
-          "aliases": []
-        },
-        {
-          "canonical": "Taurus",
-          "aliases": []
-        },
-        {
-          "canonical": "Gemini",
-          "aliases": []
-        },
-        {
-          "canonical": "Cancer",
-          "aliases": []
-        },
-        {
-          "canonical": "Leo",
-          "aliases": []
-        },
-        {
-          "canonical": "Virgo",
-          "aliases": []
-        },
-        {
-          "canonical": "Libra",
-          "aliases": []
-        },
-        {
-          "canonical": "Scorpio",
-          "aliases": []
-        },
-        {
-          "canonical": "Sagittarius",
-          "aliases": [
-            "Sag"
-          ]
-        },
-        {
-          "canonical": "Capricorn",
-          "aliases": [
-            "Cap"
-          ]
-        },
-        {
-          "canonical": "Aquarius",
-          "aliases": []
-        },
-        {
-          "canonical": "Pisces",
-          "aliases": []
-        }
-      ]
-    },
-    {
       "id": "continents",
       "name": "Continents",
       "description": "The seven-continent model.",
@@ -288,110 +229,6 @@
             "Oceania"
           ],
           "notes": "Oceania is often used for the broader region; accept it only if your game intentionally treats Australia and Oceania as equivalent."
-        }
-      ]
-    },
-    {
-      "id": "oceans",
-      "name": "World Oceans",
-      "description": "The five-ocean model.",
-      "answers": [
-        {
-          "canonical": "Arctic Ocean",
-          "aliases": [
-            "Arctic"
-          ]
-        },
-        {
-          "canonical": "Atlantic Ocean",
-          "aliases": [
-            "Atlantic"
-          ]
-        },
-        {
-          "canonical": "Indian Ocean",
-          "aliases": [
-            "Indian"
-          ]
-        },
-        {
-          "canonical": "Pacific Ocean",
-          "aliases": [
-            "Pacific"
-          ]
-        },
-        {
-          "canonical": "Southern Ocean",
-          "aliases": [
-            "Antarctic Ocean",
-            "Southern"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "chess_pieces",
-      "name": "Chess Pieces",
-      "description": "The six types of pieces used in standard chess.",
-      "answers": [
-        {
-          "canonical": "King",
-          "aliases": []
-        },
-        {
-          "canonical": "Queen",
-          "aliases": []
-        },
-        {
-          "canonical": "Rook",
-          "aliases": [
-            "Castle"
-          ]
-        },
-        {
-          "canonical": "Bishop",
-          "aliases": []
-        },
-        {
-          "canonical": "Knight",
-          "aliases": [
-            "Horse"
-          ]
-        },
-        {
-          "canonical": "Pawn",
-          "aliases": []
-        }
-      ]
-    },
-    {
-      "id": "card_suits",
-      "name": "Playing Card Suits",
-      "description": "The four suits in a standard French-suited deck.",
-      "answers": [
-        {
-          "canonical": "Hearts",
-          "aliases": [
-            "Heart"
-          ]
-        },
-        {
-          "canonical": "Diamonds",
-          "aliases": [
-            "Diamond"
-          ]
-        },
-        {
-          "canonical": "Clubs",
-          "aliases": [
-            "Club"
-          ]
-        },
-        {
-          "canonical": "Spades",
-          "aliases": [
-            "Spade"
-          ]
         }
       ]
     },
@@ -1010,54 +847,6 @@
       ]
     },
     {
-      "id": "us_coins",
-      "name": "US Coin Denominations",
-      "description": "Common circulating and historically familiar US coin denominations; not paper money.",
-      "answers": [
-        {
-          "canonical": "Penny",
-          "aliases": [
-            "One-cent coin",
-            "Cent"
-          ]
-        },
-        {
-          "canonical": "Nickel",
-          "aliases": [
-            "Five-cent coin"
-          ]
-        },
-        {
-          "canonical": "Dime",
-          "aliases": [
-            "Ten-cent coin"
-          ]
-        },
-        {
-          "canonical": "Quarter",
-          "aliases": [
-            "Quarter dollar",
-            "Twenty-five-cent coin"
-          ]
-        },
-        {
-          "canonical": "Half dollar",
-          "aliases": [
-            "Fifty-cent coin",
-            "Half-dollar"
-          ]
-        },
-        {
-          "canonical": "Dollar coin",
-          "aliases": [
-            "One-dollar coin",
-            "Gold dollar"
-          ],
-          "notes": "Gold dollar is a colloquial reference to some dollar coins, not a distinct denomination."
-        }
-      ]
-    },
-    {
       "id": "mythical_creatures",
       "name": "Mythical Creatures",
       "description": "Well-known creatures from mythology and folklore.",
@@ -1489,6 +1278,1010 @@
           "canonical": "Oats",
           "aliases": [
             "Rolled oats"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "countries_southeast_asia",
+      "name": "Countries in Southeast Asia",
+      "description": "The 11 sovereign states commonly included in Southeast Asia.",
+      "answers": [
+        {
+          "canonical": "Brunei",
+          "aliases": [
+            "Brunei Darussalam"
+          ]
+        },
+        {
+          "canonical": "Cambodia",
+          "aliases": [
+            "Kingdom of Cambodia"
+          ]
+        },
+        {
+          "canonical": "Indonesia",
+          "aliases": [
+            "Republic of Indonesia"
+          ]
+        },
+        {
+          "canonical": "Laos",
+          "aliases": [
+            "Lao PDR",
+            "Lao People's Democratic Republic"
+          ]
+        },
+        {
+          "canonical": "Malaysia",
+          "aliases": [
+            "Federation of Malaysia"
+          ]
+        },
+        {
+          "canonical": "Myanmar",
+          "aliases": [
+            "Burma"
+          ]
+        },
+        {
+          "canonical": "Philippines",
+          "aliases": [
+            "The Philippines"
+          ]
+        },
+        {
+          "canonical": "Singapore",
+          "aliases": [
+            "Republic of Singapore"
+          ]
+        },
+        {
+          "canonical": "Thailand",
+          "aliases": [
+            "Kingdom of Thailand"
+          ]
+        },
+        {
+          "canonical": "Timor-Leste",
+          "aliases": [
+            "East Timor"
+          ]
+        },
+        {
+          "canonical": "Vietnam",
+          "aliases": [
+            "Viet Nam"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "winter_clothing",
+      "name": "Winter Clothing",
+      "description": "A selected set of common clothing items worn in cold or snowy weather.",
+      "answers": [
+        {
+          "canonical": "Winter coat",
+          "aliases": [
+            "Coat",
+            "Parka"
+          ]
+        },
+        {
+          "canonical": "Puffer jacket",
+          "aliases": [
+            "Down jacket"
+          ]
+        },
+        {
+          "canonical": "Sweater",
+          "aliases": [
+            "Jumper",
+            "Pullover"
+          ]
+        },
+        {
+          "canonical": "Cardigan",
+          "aliases": []
+        },
+        {
+          "canonical": "Fleece",
+          "aliases": [
+            "Fleece jacket"
+          ]
+        },
+        {
+          "canonical": "Thermal underwear",
+          "aliases": [
+            "Long underwear",
+            "Base layer"
+          ]
+        },
+        {
+          "canonical": "Scarf",
+          "aliases": []
+        },
+        {
+          "canonical": "Beanie",
+          "aliases": [
+            "Knit cap",
+            "Winter hat"
+          ]
+        },
+        {
+          "canonical": "Earmuffs",
+          "aliases": []
+        },
+        {
+          "canonical": "Gloves",
+          "aliases": []
+        },
+        {
+          "canonical": "Mittens",
+          "aliases": []
+        },
+        {
+          "canonical": "Snow pants",
+          "aliases": [
+            "Ski pants"
+          ]
+        },
+        {
+          "canonical": "Snow boots",
+          "aliases": [
+            "Winter boots"
+          ]
+        },
+        {
+          "canonical": "Wool socks",
+          "aliases": [
+            "Thermal socks"
+          ]
+        },
+        {
+          "canonical": "Balaclava",
+          "aliases": [
+            "Ski mask"
+          ]
+        },
+        {
+          "canonical": "Ear warmer",
+          "aliases": [
+            "Headband ear warmer"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "electric_kitchen_appliances",
+      "name": "Electric Kitchen Appliances",
+      "description": "Common electrically powered appliances used for food preparation or cooking.",
+      "answers": [
+        {
+          "canonical": "Microwave",
+          "aliases": [
+            "Microwave oven"
+          ]
+        },
+        {
+          "canonical": "Refrigerator",
+          "aliases": [
+            "Fridge"
+          ]
+        },
+        {
+          "canonical": "Freezer",
+          "aliases": []
+        },
+        {
+          "canonical": "Electric oven",
+          "aliases": [
+            "Oven"
+          ]
+        },
+        {
+          "canonical": "Toaster",
+          "aliases": []
+        },
+        {
+          "canonical": "Toaster oven",
+          "aliases": [
+            "Countertop oven"
+          ]
+        },
+        {
+          "canonical": "Blender",
+          "aliases": []
+        },
+        {
+          "canonical": "Food processor",
+          "aliases": []
+        },
+        {
+          "canonical": "Electric kettle",
+          "aliases": [
+            "Kettle"
+          ]
+        },
+        {
+          "canonical": "Rice cooker",
+          "aliases": []
+        },
+        {
+          "canonical": "Slow cooker",
+          "aliases": [
+            "Crockpot"
+          ]
+        },
+        {
+          "canonical": "Pressure cooker",
+          "aliases": [
+            "Electric pressure cooker",
+            "Instant Pot"
+          ],
+          "notes": "Instant Pot is a brand name commonly used for this appliance type."
+        },
+        {
+          "canonical": "Air fryer",
+          "aliases": []
+        },
+        {
+          "canonical": "Stand mixer",
+          "aliases": [
+            "Electric mixer"
+          ]
+        },
+        {
+          "canonical": "Coffee maker",
+          "aliases": [
+            "Coffee machine"
+          ]
+        },
+        {
+          "canonical": "Dishwasher",
+          "aliases": []
+        },
+        {
+          "canonical": "Electric griddle",
+          "aliases": [
+            "Griddle"
+          ]
+        },
+        {
+          "canonical": "Waffle maker",
+          "aliases": [
+            "Waffle iron"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "furniture",
+      "name": "Furniture",
+      "description": "A selected set of common household furniture items.",
+      "answers": [
+        {
+          "canonical": "Sofa",
+          "aliases": [
+            "Couch"
+          ]
+        },
+        {
+          "canonical": "Armchair",
+          "aliases": [
+            "Easy chair"
+          ]
+        },
+        {
+          "canonical": "Dining chair",
+          "aliases": [
+            "Chair"
+          ]
+        },
+        {
+          "canonical": "Dining table",
+          "aliases": [
+            "Kitchen table"
+          ]
+        },
+        {
+          "canonical": "Coffee table",
+          "aliases": []
+        },
+        {
+          "canonical": "Side table",
+          "aliases": [
+            "End table"
+          ]
+        },
+        {
+          "canonical": "Desk",
+          "aliases": [
+            "Writing desk"
+          ]
+        },
+        {
+          "canonical": "Bookshelf",
+          "aliases": [
+            "Bookcase"
+          ]
+        },
+        {
+          "canonical": "Bed",
+          "aliases": []
+        },
+        {
+          "canonical": "Bunk bed",
+          "aliases": []
+        },
+        {
+          "canonical": "Dresser",
+          "aliases": [
+            "Chest of drawers"
+          ]
+        },
+        {
+          "canonical": "Wardrobe",
+          "aliases": [
+            "Freestanding closet"
+          ],
+          "notes": "A freestanding wardrobe; built-in closets are not usually furniture items."
+        },
+        {
+          "canonical": "Nightstand",
+          "aliases": [
+            "Bedside table"
+          ]
+        },
+        {
+          "canonical": "TV stand",
+          "aliases": [
+            "Entertainment unit"
+          ]
+        },
+        {
+          "canonical": "Recliner",
+          "aliases": [
+            "Reclining chair"
+          ]
+        },
+        {
+          "canonical": "Ottoman",
+          "aliases": []
+        },
+        {
+          "canonical": "Bench",
+          "aliases": []
+        },
+        {
+          "canonical": "Dining bench",
+          "aliases": []
+        }
+      ]
+    },
+    {
+      "id": "countries_over_10m",
+      "name": "Countries with More Than 10 Million People",
+      "description": "A curated game list of 20 populous countries, all with populations above 10 million. Not exhaustive: the full set exceeds the target answer count.",
+      "answers": [
+        {
+          "canonical": "China",
+          "aliases": [
+            "People's Republic of China",
+            "PRC"
+          ]
+        },
+        {
+          "canonical": "India",
+          "aliases": [
+            "Republic of India"
+          ]
+        },
+        {
+          "canonical": "United States",
+          "aliases": [
+            "USA",
+            "US",
+            "United States of America"
+          ]
+        },
+        {
+          "canonical": "Indonesia",
+          "aliases": [
+            "Republic of Indonesia"
+          ]
+        },
+        {
+          "canonical": "Pakistan",
+          "aliases": [
+            "Islamic Republic of Pakistan"
+          ]
+        },
+        {
+          "canonical": "Nigeria",
+          "aliases": [
+            "Federal Republic of Nigeria"
+          ]
+        },
+        {
+          "canonical": "Brazil",
+          "aliases": [
+            "Federative Republic of Brazil"
+          ]
+        },
+        {
+          "canonical": "Bangladesh",
+          "aliases": [
+            "People’s Republic of Bangladesh"
+          ]
+        },
+        {
+          "canonical": "Russia",
+          "aliases": [
+            "Russian Federation"
+          ]
+        },
+        {
+          "canonical": "Ethiopia",
+          "aliases": [
+            "Federal Democratic Republic of Ethiopia"
+          ]
+        },
+        {
+          "canonical": "Mexico",
+          "aliases": [
+            "United Mexican States"
+          ]
+        },
+        {
+          "canonical": "Japan",
+          "aliases": [
+            "Nippon",
+            "Nihon"
+          ]
+        },
+        {
+          "canonical": "Egypt",
+          "aliases": [
+            "Arab Republic of Egypt"
+          ]
+        },
+        {
+          "canonical": "Philippines",
+          "aliases": [
+            "The Philippines"
+          ]
+        },
+        {
+          "canonical": "Democratic Republic of the Congo",
+          "aliases": [
+            "DR Congo",
+            "DRC",
+            "Congo-Kinshasa"
+          ]
+        },
+        {
+          "canonical": "Vietnam",
+          "aliases": [
+            "Viet Nam"
+          ]
+        },
+        {
+          "canonical": "Iran",
+          "aliases": [
+            "Islamic Republic of Iran",
+            "Persia"
+          ]
+        },
+        {
+          "canonical": "Turkey",
+          "aliases": [
+            "Türkiye"
+          ]
+        },
+        {
+          "canonical": "Germany",
+          "aliases": [
+            "Federal Republic of Germany"
+          ]
+        },
+        {
+          "canonical": "Thailand",
+          "aliases": [
+            "Kingdom of Thailand"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "grey_animals",
+      "name": "Grey Animals",
+      "description": "Recognizable animals commonly depicted with grey coloration; individual species can vary in color.",
+      "answers": [
+        {
+          "canonical": "Elephant",
+          "aliases": [
+            "African elephant",
+            "Asian elephant"
+          ]
+        },
+        {
+          "canonical": "Wolf",
+          "aliases": [
+            "Gray wolf",
+            "Grey wolf"
+          ]
+        },
+        {
+          "canonical": "Koala",
+          "aliases": []
+        },
+        {
+          "canonical": "Dolphin",
+          "aliases": []
+        },
+        {
+          "canonical": "Grey squirrel",
+          "aliases": [
+            "Gray squirrel"
+          ]
+        },
+        {
+          "canonical": "Donkey",
+          "aliases": []
+        },
+        {
+          "canonical": "Rhinoceros",
+          "aliases": [
+            "Rhino"
+          ]
+        },
+        {
+          "canonical": "Hippopotamus",
+          "aliases": [
+            "Hippo"
+          ]
+        },
+        {
+          "canonical": "Gorilla",
+          "aliases": []
+        },
+        {
+          "canonical": "Seal",
+          "aliases": []
+        },
+        {
+          "canonical": "Manatee",
+          "aliases": []
+        },
+        {
+          "canonical": "Grey heron",
+          "aliases": [
+            "Gray heron"
+          ]
+        },
+        {
+          "canonical": "Chinchilla",
+          "aliases": []
+        },
+        {
+          "canonical": "Pigeon",
+          "aliases": [
+            "Rock pigeon"
+          ]
+        },
+        {
+          "canonical": "Shark",
+          "aliases": []
+        },
+        {
+          "canonical": "Wombat",
+          "aliases": []
+        },
+        {
+          "canonical": "Mole",
+          "aliases": []
+        },
+        {
+          "canonical": "Silverback gorilla",
+          "aliases": [
+            "Silverback"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fang_animals",
+      "name": "Animals That Have Fangs",
+      "description": "A curated list of familiar animals with prominent or commonly described fangs; terminology varies by species.",
+      "answers": [
+        {
+          "canonical": "Snake",
+          "aliases": [
+            "Venomous snake"
+          ]
+        },
+        {
+          "canonical": "Tiger",
+          "aliases": []
+        },
+        {
+          "canonical": "Lion",
+          "aliases": []
+        },
+        {
+          "canonical": "Wolf",
+          "aliases": []
+        },
+        {
+          "canonical": "Fox",
+          "aliases": []
+        },
+        {
+          "canonical": "Dog",
+          "aliases": []
+        },
+        {
+          "canonical": "Cat",
+          "aliases": []
+        },
+        {
+          "canonical": "Vampire bat",
+          "aliases": []
+        },
+        {
+          "canonical": "Walrus",
+          "aliases": []
+        },
+        {
+          "canonical": "Baboon",
+          "aliases": []
+        },
+        {
+          "canonical": "Hippopotamus",
+          "aliases": [
+            "Hippo"
+          ]
+        },
+        {
+          "canonical": "Leopard",
+          "aliases": []
+        },
+        {
+          "canonical": "Jaguar",
+          "aliases": []
+        },
+        {
+          "canonical": "Bear",
+          "aliases": []
+        },
+        {
+          "canonical": "Crocodile",
+          "aliases": []
+        },
+        {
+          "canonical": "Alligator",
+          "aliases": []
+        },
+        {
+          "canonical": "Mongoose",
+          "aliases": []
+        },
+        {
+          "canonical": "Tasmanian devil",
+          "aliases": []
+        }
+      ]
+    },
+    {
+      "id": "winged_animals",
+      "name": "Animals That Have Wings",
+      "description": "A selected list of recognizable animals with wings, including birds, insects, and bats.",
+      "answers": [
+        {
+          "canonical": "Eagle",
+          "aliases": []
+        },
+        {
+          "canonical": "Owl",
+          "aliases": []
+        },
+        {
+          "canonical": "Parrot",
+          "aliases": []
+        },
+        {
+          "canonical": "Penguin",
+          "aliases": [],
+          "notes": "Wings are present but adapted into flippers; counts as having wings."
+        },
+        {
+          "canonical": "Chicken",
+          "aliases": []
+        },
+        {
+          "canonical": "Duck",
+          "aliases": []
+        },
+        {
+          "canonical": "Swan",
+          "aliases": []
+        },
+        {
+          "canonical": "Butterfly",
+          "aliases": []
+        },
+        {
+          "canonical": "Bee",
+          "aliases": []
+        },
+        {
+          "canonical": "Wasp",
+          "aliases": []
+        },
+        {
+          "canonical": "Dragonfly",
+          "aliases": []
+        },
+        {
+          "canonical": "Mosquito",
+          "aliases": []
+        },
+        {
+          "canonical": "Bat",
+          "aliases": []
+        },
+        {
+          "canonical": "Pigeon",
+          "aliases": []
+        },
+        {
+          "canonical": "Flamingo",
+          "aliases": []
+        },
+        {
+          "canonical": "Hummingbird",
+          "aliases": []
+        },
+        {
+          "canonical": "Crow",
+          "aliases": []
+        },
+        {
+          "canonical": "Seagull",
+          "aliases": [
+            "Gull"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "electronic_devices",
+      "name": "Electronic Devices",
+      "description": "A selected set of common consumer electronic devices.",
+      "answers": [
+        {
+          "canonical": "Smartphone",
+          "aliases": [
+            "Cell phone",
+            "Mobile phone"
+          ]
+        },
+        {
+          "canonical": "Tablet",
+          "aliases": [
+            "Tablet computer"
+          ]
+        },
+        {
+          "canonical": "Laptop",
+          "aliases": [
+            "Notebook computer"
+          ]
+        },
+        {
+          "canonical": "Desktop computer",
+          "aliases": [
+            "PC"
+          ]
+        },
+        {
+          "canonical": "Smartwatch",
+          "aliases": [
+            "Digital watch"
+          ]
+        },
+        {
+          "canonical": "Television",
+          "aliases": [
+            "TV"
+          ]
+        },
+        {
+          "canonical": "Monitor",
+          "aliases": [
+            "Computer monitor",
+            "Display"
+          ]
+        },
+        {
+          "canonical": "Digital camera",
+          "aliases": [
+            "Camera"
+          ]
+        },
+        {
+          "canonical": "Video game console",
+          "aliases": [
+            "Gaming console"
+          ]
+        },
+        {
+          "canonical": "E-reader",
+          "aliases": [
+            "Kindle"
+          ],
+          "notes": "Kindle is a brand commonly used to refer to e-readers."
+        },
+        {
+          "canonical": "Headphones",
+          "aliases": []
+        },
+        {
+          "canonical": "Earbuds",
+          "aliases": [
+            "Wireless earbuds"
+          ]
+        },
+        {
+          "canonical": "Bluetooth speaker",
+          "aliases": [
+            "Portable speaker"
+          ]
+        },
+        {
+          "canonical": "Printer",
+          "aliases": []
+        },
+        {
+          "canonical": "Router",
+          "aliases": [
+            "Wi-Fi router"
+          ]
+        },
+        {
+          "canonical": "Projector",
+          "aliases": []
+        },
+        {
+          "canonical": "GPS device",
+          "aliases": [
+            "GPS navigator"
+          ]
+        },
+        {
+          "canonical": "Drone",
+          "aliases": [
+            "Camera drone"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "movie_genres",
+      "name": "Movie Genres",
+      "description": "Common broad movie genres. A movie may belong to more than one genre.",
+      "answers": [
+        {
+          "canonical": "Action",
+          "aliases": [
+            "Action film"
+          ]
+        },
+        {
+          "canonical": "Adventure",
+          "aliases": [
+            "Adventure film"
+          ]
+        },
+        {
+          "canonical": "Comedy",
+          "aliases": [
+            "Comedic film"
+          ]
+        },
+        {
+          "canonical": "Drama",
+          "aliases": [
+            "Dramatic film"
+          ]
+        },
+        {
+          "canonical": "Horror",
+          "aliases": [
+            "Horror film"
+          ]
+        },
+        {
+          "canonical": "Science fiction",
+          "aliases": [
+            "Sci-fi",
+            "SF"
+          ]
+        },
+        {
+          "canonical": "Fantasy",
+          "aliases": [
+            "Fantasy film"
+          ]
+        },
+        {
+          "canonical": "Romance",
+          "aliases": [
+            "Romantic film"
+          ]
+        },
+        {
+          "canonical": "Thriller",
+          "aliases": [
+            "Thriller film"
+          ]
+        },
+        {
+          "canonical": "Mystery",
+          "aliases": [
+            "Detective film"
+          ]
+        },
+        {
+          "canonical": "Crime",
+          "aliases": [
+            "Crime film"
+          ]
+        },
+        {
+          "canonical": "Animation",
+          "aliases": [
+            "Animated film",
+            "Cartoon"
+          ]
+        },
+        {
+          "canonical": "Documentary",
+          "aliases": [
+            "Documentary film"
+          ]
+        },
+        {
+          "canonical": "Musical",
+          "aliases": [
+            "Musical film"
+          ]
+        },
+        {
+          "canonical": "Western",
+          "aliases": [
+            "Western film"
+          ]
+        },
+        {
+          "canonical": "War",
+          "aliases": [
+            "War film"
+          ]
+        },
+        {
+          "canonical": "Historical",
+          "aliases": [
+            "Historical film",
+            "Period film"
+          ]
+        },
+        {
+          "canonical": "Family",
+          "aliases": [
+            "Family film"
           ]
         }
       ]

@@ -30,7 +30,7 @@ describe('server AI questions', { timeout: 20_000 }, () => {
     let calls = 0
     const context = aiContext(roomCode, 'alice', { question: 'Does it use a ball?', truth: 'No' }, async (_endpoint, body) => {
       calls++
-      expect(body.model).toBe('gpt-5.4-nano')
+      expect(body.model).toBe('gpt-5.4-mini')
       expect(body.messages[1].content).toContain('tennis')
       return modelReply({ valid: true, reason: 'ok', truth: 'Yes' })
     })
@@ -104,8 +104,13 @@ describe('server AI questions', { timeout: 20_000 }, () => {
   })
 })
 
-async function readyGuesses(code: string) {
-  await readyQA(code)
+async function readyGuesses(code: string, categoryId?: string, words?: [string, string]) {
+  if (categoryId && words) {
+    await seed(code)
+    expect((await tool('alice', 'records.update', { collection: LOBBY_SEATS, recordId: `${code}:alice`, data: { categoryId } }, true)).success).toBe(true)
+    expect((await select('alice', code, words[0])).success).toBe(true)
+    expect((await select('bob', code, words[1])).success).toBe(true)
+  } else await readyQA(code)
   for (let turn = 1; turn <= 6; turn++) {
     const asker = turn % 2 ? 'alice' : 'bob'
     const answerer = turn % 2 ? 'bob' : 'alice'
@@ -118,6 +123,14 @@ const guessRows = async (code: string) => (await tool('alice', 'records.query', 
 const guess = (user: string, code: string, round: number, word: string) => qa(user, GUESS_RESERVE_PATH, code, 0, { round, guess: word })
 
 describe('private guessing and match results', { timeout: 20_000 }, () => {
+  it('counts an unambiguous typo as correct and ends simultaneous correct guesses in a tie', async () => {
+    const code = 'HART'
+    await readyGuesses(code, 'body_organs', ['Heart', 'Bladder'])
+    expect(await guess('alice', code, 1, 'blader')).toMatchObject({ success: true, data: { needsJudge: false } })
+    expect((await guessRows(code))[0].data.status).toBe('collecting')
+    expect(await guess('bob', code, 1, 'heart')).toMatchObject({ success: true, data: { needsJudge: false } })
+    expect((await guessRows(code))[0].data).toMatchObject({ status: 'finished', result: 'tie', word1: 'Heart', word2: 'Bladder' })
+  })
   it('keeps semantic judge work off the public response and bills only one call for duplicate submissions', async () => {
     const code = 'BELL'
     await readyGuesses(code)
